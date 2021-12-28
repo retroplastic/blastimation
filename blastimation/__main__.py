@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QS
     QListView, QAbstractItemView, QComboBox
 
 from rom import Rom, blast_get_png_writer
-from blast import Blast
+from blast import Blast, decode_blast_lookup
 
 
 class Blastimation(QWidget):
@@ -117,12 +117,17 @@ class Blastimation(QWidget):
         self.images = {
             "00DB08": [1, 32, 32],
             "26A1C0": [1, 40, 40],
+            "27DB30": [2, 32, 32],
             "08EBE8": [3, 64, 64],
             "33D7D8": [6, 16, 32],
+            "1F0BD8": [4, 64, 32],
+            "1DC880": [5, 32, 32],
         }
 
-        list_model = QStandardItemModel(0, 1)
+        self.lut_128_key = "047480"
+        self.lut_256_key = "152970"
 
+        list_model = QStandardItemModel(0, 1)
         for k in self.images.keys():
             list_model.appendRow(QStandardItem(k))
 
@@ -130,9 +135,30 @@ class Blastimation(QWidget):
         list_view.setObjectName("listView")
         list_view.setModel(list_model)
         list_view.clicked.connect(self.on_list_select)
+        list_view.activated.connect(self.on_list_select)
         list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        list_view.setSelectionBehavior(QAbstractItemView.SelectItems)
 
-        main_layout.addWidget(list_view)
+        lut_model = QStandardItemModel(0, 1)
+        for k in self.rom.luts[256].keys():
+            lut_model.appendRow(QStandardItem(k))
+
+        lut_view = QListView()
+        lut_view.setObjectName("lutView")
+        lut_view.setModel(lut_model)
+        lut_view.clicked.connect(self.on_lut_select)
+        lut_view.activated.connect(self.on_lut_select)
+        lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        lut_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        lut_view.setSelectionBehavior(QAbstractItemView.SelectItems)
+
+        lists_layout = QHBoxLayout()
+        lists_layout.addWidget(list_view)
+        lists_layout.addWidget(lut_view)
+        main_layout.addLayout(lists_layout)
+
+        self.current_blast = None
 
     def on_format_changed(self, index):
         format_name = self.format_names[index]
@@ -150,7 +176,22 @@ class Blastimation(QWidget):
     def on_list_select(self, model_index):
         key = model_index.data()
         image_data = self.images[key]
-        self.load_image(key, image_data[0], image_data[1], image_data[2])
+
+        blast_type = Blast(image_data[0])
+
+        match blast_type:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                self.load_image_lut(key, image_data[0], image_data[1], image_data[2])
+            case _:
+                self.load_image(key, image_data[0], image_data[1], image_data[2])
+
+        self.update_image_label()
+
+    def on_lut_select(self, model_index):
+        self.lut_256_key = model_index.data()
+        print("Selected lut", self.lut_256_key)
+
+        self.regen_pixmap()
         self.update_image_label()
 
     def load_image(self, address: str, blast_id: int, width: int, height: int):
@@ -162,9 +203,42 @@ class Blastimation(QWidget):
         self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
         self.width = width
         self.height = height
+        self.current_blast = blast_type
 
         match blast_type:
-            case (Blast.BLAST6_IA8 | Blast.BLAST3_IA8):
+            case (Blast.BLAST6_IA8 | Blast.BLAST3_IA8 | Blast.BLAST4_IA16):
+                self.bytes_per_pixel = 2
+                self.format = QImage.Format_Grayscale16
+            case _:
+                self.bytes_per_pixel = 4
+                self.format = QImage.Format_RGBA8888
+
+        self.regen_pixmap()
+
+    def load_image_lut(self, address: str, blast_id: int, width: int, height: int):
+        blast_type = Blast(blast_id)
+
+        match blast_type:
+            case Blast.BLAST4_IA16:
+                lut = self.rom.luts[128][self.lut_128_key]
+            case Blast.BLAST5_RGBA32:
+                lut = self.rom.luts[256][self.lut_256_key]
+            case _:
+                return
+
+        self.encoded_bytes = self.rom.blasts[blast_id][address]
+
+        decoded_bytes = decode_blast_lookup(blast_type, self.encoded_bytes, lut)
+
+        writer_class = blast_get_png_writer(blast_type)
+
+        self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        self.width = width
+        self.height = height
+        self.current_blast = blast_type
+
+        match blast_type:
+            case (Blast.BLAST6_IA8 | Blast.BLAST3_IA8 | Blast.BLAST4_IA16):
                 self.bytes_per_pixel = 2
                 self.format = QImage.Format_Grayscale16
             case _:
@@ -174,6 +248,18 @@ class Blastimation(QWidget):
         self.regen_pixmap()
 
     def regen_pixmap(self):
+        match self.current_blast:
+            case Blast.BLAST4_IA16:
+                lut = self.rom.luts[128][self.lut_128_key]
+                decoded_bytes = decode_blast_lookup(self.current_blast, self.encoded_bytes, lut)
+                writer_class = blast_get_png_writer(self.current_blast)
+                self.image_data = writer_class.parse_image(decoded_bytes, self.width, self.height, False, True)
+            case Blast.BLAST5_RGBA32:
+                lut = self.rom.luts[256][self.lut_256_key]
+                decoded_bytes = decode_blast_lookup(self.current_blast, self.encoded_bytes, lut)
+                writer_class = blast_get_png_writer(self.current_blast)
+                self.image_data = writer_class.parse_image(decoded_bytes, self.width, self.height, False, True)
+
         image = QImage(self.image_data, self.width, self.height, self.bytes_per_pixel * self.width, self.format)
         self.pixmap = QPixmap.fromImage(image)
 
@@ -189,7 +275,7 @@ class Blastimation(QWidget):
             self.pixmap.scaled(
                 self.image_label.size(),
                 Qt.KeepAspectRatio,
-                Qt.SmoothTransformation,
+                Qt.FastTransformation,
             )
         )
 
