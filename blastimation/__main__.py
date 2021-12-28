@@ -38,14 +38,21 @@ class Blastimation(QWidget):
         self.setWindowTitle("Blastimation")
         self.resize(300, 200)
 
-        rom = Rom(sys.argv[1])
-        blast_id = 1
-        address = "26A1C0"
-        width = 40
-        height = 40
+        self.pixmap = None
 
+        self.rom = Rom(sys.argv[1])
+
+        self.load_image("00DB08", 1, 32, 32)
+        # self.load_image("26A1C0", 1, 40, 40)
+        # self.load_image("27DB30", 2, 32, 32)
+        # self.load_image("08EBE8", 3, 64, 64)
+        # self.load_image_lut("1F0BD8", 4, 64, 32, "047480")
+        # self.load_image_lut("1DC880", 5, 32, 32, "152970")
+        # self.load_image("33D7D8", 6, 16, 32)
+
+    def load_image(self, address: str, blast_id: int, width: int, height: int):
         blast_type = Blast(blast_id)
-        decoded_bytes = rom.blasts[blast_id][address]
+        decoded_bytes = self.rom.blasts[blast_id][address]
 
         writer_class = blast_get_png_writer(blast_type)
 
