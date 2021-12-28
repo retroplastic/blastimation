@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import struct
 import sys
+from pathlib import Path
 
-from blast import Blast, decode_blast
+from blast import Blast, decode_blast, decode_blast_lookup
 from splat_img.rgba16 import N64SegRgba16
 from splat_img.rgba32 import N64SegRgba32
 from splat_img.ia8 import N64SegIa8
@@ -79,13 +80,48 @@ class Blastimation:
         for blast_id, blast_dict in self.blasts.items():
             print(f"  {Blast(blast_id)} ({len(blast_dict)})")
 
+    def save_png_base(self):
+        pass
+
     def save_png(self, address: str, blast_id: int, width: int, height: int):
         blast_type = Blast(blast_id)
         decoded_bytes = self.blasts[blast_id][address]
         writer_class = blast_get_png_writer(blast_type)
 
+        png_dir_path = Path("test")
+        png_dir_path.mkdir(exist_ok=True, parents=True)
+
         png_writer = writer_class.get_writer(width, height)
-        png_file_path = f"{address}.png"
+        png_file_path = png_dir_path / f"{address}.png"
+
+        print(f"Writing {png_file_path}...")
+
+        with open(png_file_path, "wb") as f:
+            match blast_type:
+                case Blast.BLAST4_IA16:
+                    png_writer.write_array(f, decoded_bytes)
+                case _:
+                    png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
+
+    def save_png_lut(self, address: str, blast_id: int, width: int, height: int, lut_addr: str):
+        blast_type = Blast(blast_id)
+        encoded_bytes = self.blasts[blast_id][address]
+
+        match blast_type:
+            case Blast.BLAST4_IA16:
+                lut = self.luts[128][lut_addr]
+                decoded_bytes = decode_blast_lookup(blast_type, encoded_bytes, lut)
+            case Blast.BLAST5_RGBA32:
+                lut = self.luts[256][lut_addr]
+                decoded_bytes = decode_blast_lookup(blast_type, encoded_bytes, lut)
+
+        writer_class = blast_get_png_writer(blast_type)
+
+        png_dir_path = Path("test")
+        png_dir_path.mkdir(exist_ok=True, parents=True)
+
+        png_writer = writer_class.get_writer(width, height)
+        png_file_path = png_dir_path / f"{address}.png"
 
         print(f"Writing {png_file_path}...")
 
@@ -116,14 +152,14 @@ def main():
     app.read_rom(rom_bytes)
     app.print_stats()
 
+    # Test
     app.save_png("00DB08", 1, 32, 32)
     app.save_png("26A1C0", 1, 40, 40)
     app.save_png("27DB30", 2, 32, 32)
     app.save_png("08EBE8", 3, 64, 64)
-    # app.save_png("08EBE8", 4, 64, 64)
-    # app.save_png("08EBE8", 5, 64, 64)
+    app.save_png_lut("1F0BD8", 4, 64, 32, "047480")
+    app.save_png_lut("1DC880", 5, 32, 32, "152970")
     app.save_png("33D7D8", 6, 16, 32)
-
 
 
 main()
