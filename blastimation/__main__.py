@@ -2,10 +2,11 @@
 import sys
 
 from PySide6.QtCore import QRect, Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
-from rom import Rom
+from rom import Rom, blast_get_png_writer
+from blast import Blast
 
 
 class Blastimation(QWidget):
@@ -37,7 +38,21 @@ class Blastimation(QWidget):
         self.setWindowTitle("Blastimation")
         self.resize(300, 200)
 
-        self.pixmap = QPixmap("test/26A1C0.png")
+        rom = Rom(sys.argv[1])
+        blast_id = 1
+        address = "26A1C0"
+        width = 40
+        height = 40
+
+        blast_type = Blast(blast_id)
+        decoded_bytes = rom.blasts[blast_id][address]
+
+        writer_class = blast_get_png_writer(blast_type)
+
+        image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+
+        image = QImage(image_data, width, height, 4 * width, QImage.Format_RGBA8888)
+        self.pixmap = QPixmap.fromImage(image)
 
     def resizeEvent(self, event):
         scaled_size = self.pixmap.size()
@@ -67,9 +82,6 @@ def main():
         return
 
     print(f"Opening {sys.argv[1]}...")
-    rom = Rom(sys.argv[1])
-    rom.print_stats()
-    rom.test()
 
     app = QApplication(sys.argv)
     widget = Blastimation()
