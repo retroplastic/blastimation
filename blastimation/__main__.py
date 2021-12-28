@@ -3,6 +3,10 @@ import struct
 import sys
 
 from blast import Blast, decode_blast
+from splat_img.rgba16 import N64SegRgba16
+from splat_img.rgba32 import N64SegRgba32
+from splat_img.ia8 import N64SegIa8
+from splat_img.ia16 import N64SegIa16
 
 
 def print_usage():
@@ -12,6 +16,20 @@ def print_usage():
 
 ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
+
+
+def blast_get_png_writer(blast_type: Blast):
+    match blast_type:
+        case Blast.BLAST1_RGBA16:
+            return N64SegRgba16
+        case (Blast.BLAST2_RGBA32 | Blast.BLAST5_RGBA32):
+            return N64SegRgba32
+        case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
+            return N64SegIa8
+        case Blast.BLAST4_IA16:
+            return N64SegIa16
+        case _:
+            return None
 
 
 def main():
@@ -73,6 +91,26 @@ def main():
     print("Blasts:")
     for blast_id, blast_dict in blasts.items():
         print(f"  {Blast(blast_id)} ({len(blast_dict)})")
+
+    blast_type = Blast(3)
+
+    decoded_bytes = blasts[3]["08EBE8"]
+    writer_class = blast_get_png_writer(blast_type)
+
+    width = 64
+    height = 64
+
+    png_writer = writer_class.get_writer(width, height)
+    png_file_path = f"{address}.png"
+
+    print(f"Writing {png_file_path}...")
+
+    with open(png_file_path, "wb") as f:
+        match blast_type:
+            case Blast.BLAST4_IA16:
+                png_writer.write_array(f, decoded_bytes)
+            case _:
+                png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
 
 
 main()
