@@ -36,12 +36,61 @@ class Blastimation(QWidget):
         byte_box.currentIndexChanged.connect(self.on_byte_changed)
         buttons_layout.addWidget(byte_box)
 
+        self.formats = [
+            QImage.Format_A2BGR30_Premultiplied,
+            QImage.Format_A2RGB30_Premultiplied,
+            QImage.Format_Alpha8,
+            QImage.Format_ARGB32,
+            QImage.Format_ARGB32_Premultiplied,
+            QImage.Format_ARGB4444_Premultiplied,
+            QImage.Format_ARGB6666_Premultiplied,
+            QImage.Format_ARGB8555_Premultiplied,
+            QImage.Format_ARGB8565_Premultiplied,
+            QImage.Format_BGR30,
+            QImage.Format_BGR888,
+            QImage.Format_Grayscale16,
+            QImage.Format_Grayscale8,
+            QImage.Format_Indexed8,
+            QImage.Format_Invalid,
+            QImage.Format_Mono,
+            QImage.Format_MonoLSB,
+            QImage.Format_RGB16,
+            QImage.Format_RGB30,
+            QImage.Format_RGB32,
+            QImage.Format_RGB444,
+            QImage.Format_RGB555,
+            QImage.Format_RGB666,
+            QImage.Format_RGB888,
+            QImage.Format_RGBA16FPx4,
+            QImage.Format_RGBA16FPx4_Premultiplied,
+            QImage.Format_RGBA32FPx4,
+            QImage.Format_RGBA32FPx4_Premultiplied,
+            QImage.Format_RGBA64,
+            QImage.Format_RGBA64_Premultiplied,
+            QImage.Format_RGBA8888,
+            QImage.Format_RGBA8888_Premultiplied,
+            QImage.Format_RGBX16FPx4,
+            QImage.Format_RGBX32FPx4,
+            QImage.Format_RGBX64,
+            QImage.Format_RGBX8888,
+        ]
+
+        self.format_names = []
+        for f in self.formats:
+            self.format_names.append(f.name.decode())
+
+        format_box = QComboBox()
+        format_box.addItems(self.format_names)
+        format_box.setCurrentIndex(30)
+        format_box.currentIndexChanged.connect(self.on_format_changed)
+        buttons_layout.addWidget(format_box)
+
         # Image state
         self.bytes_per_pixel = 4
         self.image_data = None
         self.width = 0
         self.height = 0
-        self.format = QImage.Format_RGBA8888
+        self.format = self.formats[30]
 
         quit_button = QPushButton("Quit", self)
         quit_button.setShortcut(Qt.CTRL | Qt.Key_Q)
@@ -85,6 +134,13 @@ class Blastimation(QWidget):
 
         main_layout.addWidget(list_view)
 
+    def on_format_changed(self, index):
+        format_name = self.format_names[index]
+        self.format = self.formats[index]
+        print("Changing format to", index, format_name)
+        self.regen_pixmap()
+        self.update_image_label()
+
     def on_byte_changed(self, index):
         self.bytes_per_pixel = int(self.byte_options[index])
         print("bytes", self.bytes_per_pixel)
@@ -106,7 +162,14 @@ class Blastimation(QWidget):
         self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
         self.width = width
         self.height = height
-        self.format = QImage.Format_RGBA8888
+
+        match blast_type:
+            case (Blast.BLAST6_IA8 | Blast.BLAST3_IA8):
+                self.bytes_per_pixel = 2
+                self.format = QImage.Format_Grayscale16
+            case _:
+                self.bytes_per_pixel = 4
+                self.format = QImage.Format_RGBA8888
 
         self.regen_pixmap()
 
