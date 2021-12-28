@@ -26,8 +26,19 @@ def main():
 
     rom_size = len(rom_bytes)
 
-    luts128 = {}
-    luts256 = {}
+    luts = {
+        128: {},
+        256: {}
+    }
+
+    blasts = {
+        1: {},
+        2: {},
+        3: {},
+        4: {},
+        5: {},
+        6: {}
+    }
 
     for i in range(ROM_OFFSET, END_OFFSET, 8):
         start = struct.unpack(">I", rom_bytes[i:i+4])[0]
@@ -46,12 +57,22 @@ def main():
 
             match blast_type:
                 case Blast.BLAST0:
-                    if size == 128:
-                        luts128[address] = encoded_bytes
-                    elif size == 256:
-                        luts256[address] = encoded_bytes
+                    if size == 128 or size == 256:
+                        luts[size][address] = encoded_bytes
                 case (Blast.BLAST1_RGBA16 | Blast.BLAST2_RGBA32 | Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
-                    decoded_bytes = decode_blast(blast_type, encoded_bytes)
+                    blasts[blast_type.value][address] = decode_blast(blast_type, encoded_bytes)
+                case _:
+                    blasts[blast_type.value][address] = encoded_bytes
+
+    print("LUTs:")
+    for lut_size, lut_dict in luts.items():
+        print(f"  {lut_size} ({len(lut_dict)}):")
+        for addr in lut_dict.keys():
+            print("    ", addr)
+
+    print("Blasts:")
+    for blast_id, blast_dict in blasts.items():
+        print(f"  {Blast(blast_id)} ({len(blast_dict)})")
 
 
 main()
