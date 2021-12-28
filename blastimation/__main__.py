@@ -2,8 +2,9 @@
 import sys
 
 from PySide6.QtCore import QRect, Qt
-from PySide6.QtGui import QPixmap, QImage
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtGui import QPixmap, QImage, QStandardItemModel, QStandardItem, QIcon
+from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
+    QListView, QAbstractItemView, QComboBox
 
 from rom import Rom, blast_get_png_writer
 from blast import Blast
@@ -28,6 +29,20 @@ class Blastimation(QWidget):
 
         buttons_layout = QHBoxLayout()
 
+        byte_box = QComboBox()
+        self.byte_options = ["1", "2", "4", "8", "16", "32"]
+        byte_box.addItems(self.byte_options)
+        byte_box.setCurrentIndex(2)
+        byte_box.currentIndexChanged.connect(self.on_byte_changed)
+        buttons_layout.addWidget(byte_box)
+
+        # Image state
+        self.bytes_per_pixel = 4
+        self.image_data = None
+        self.width = 0
+        self.height = 0
+        self.format = QImage.Format_RGBA8888
+
         quit_button = QPushButton("Quit", self)
         quit_button.setShortcut(Qt.CTRL | Qt.Key_Q)
         quit_button.clicked.connect(self.close)
@@ -50,15 +65,53 @@ class Blastimation(QWidget):
         # self.load_image_lut("1DC880", 5, 32, 32, "152970")
         # self.load_image("33D7D8", 6, 16, 32)
 
+        self.images = {
+            "00DB08": [1, 32, 32],
+            "26A1C0": [1, 40, 40],
+            "08EBE8": [3, 64, 64],
+            "33D7D8": [6, 16, 32],
+        }
+
+        list_model = QStandardItemModel(0, 1)
+
+        for k in self.images.keys():
+            list_model.appendRow(QStandardItem(k))
+
+        list_view = QListView()
+        list_view.setObjectName("listView")
+        list_view.setModel(list_model)
+        list_view.clicked.connect(self.on_list_select)
+        list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        main_layout.addWidget(list_view)
+
+    def on_byte_changed(self, index):
+        self.bytes_per_pixel = int(self.byte_options[index])
+        print("bytes", self.bytes_per_pixel)
+        self.regen_pixmap()
+        self.update_image_label()
+
+    def on_list_select(self, model_index):
+        key = model_index.data()
+        image_data = self.images[key]
+        self.load_image(key, image_data[0], image_data[1], image_data[2])
+        self.update_image_label()
+
     def load_image(self, address: str, blast_id: int, width: int, height: int):
         blast_type = Blast(blast_id)
         decoded_bytes = self.rom.blasts[blast_id][address]
 
         writer_class = blast_get_png_writer(blast_type)
 
-        image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        self.width = width
+        self.height = height
+        self.format = QImage.Format_RGBA8888
 
-        image = QImage(image_data, width, height, 4 * width, QImage.Format_RGBA8888)
+        self.regen_pixmap()
+
+    def regen_pixmap(self):
+        image = QImage(self.image_data, self.width, self.height, self.bytes_per_pixel * self.width, self.format)
         self.pixmap = QPixmap.fromImage(image)
 
     def resizeEvent(self, event):
