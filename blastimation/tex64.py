@@ -1,6 +1,7 @@
+# Based on splat
+
 from math import ceil
 import png
-from itertools import zip_longest
 
 
 # RRRRRGGG GGBBBBBA
@@ -19,12 +20,9 @@ def unpack_color(data):
     return r, g, b, a
 
 
-def iter_in_groups(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-
-def iter_image_indexes(width, height, bytes_per_x=1, bytes_per_y=1, flip_h=False, flip_v=False):
+def iter_image_indexes(width, height,
+                       bytes_per_x: float = 1.0, bytes_per_y: float = 1.0,
+                       flip_h: bool = False, flip_v: bool = False):
     w = int(width * bytes_per_x)
     h = int(height * bytes_per_y)
 
@@ -105,11 +103,7 @@ class N64SegIa8(N64SegIa4):
 
 
 class N64SegIa16(N64SegIa4):
-    def parse_image(self, data):
+    @staticmethod
+    def parse_image(data, width, height, flip_h=False, flip_v=False):
         return data
-
-    def max_length(self):
-        return self.width * self.height * 2
-
-
 

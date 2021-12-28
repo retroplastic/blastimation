@@ -90,11 +90,7 @@ class Blastimation:
         print(f"Writing {png_file_path}...")
 
         with open(png_file_path, "wb") as f:
-            match blast_type:
-                case Blast.BLAST4_IA16:
-                    png_writer.write_array(f, decoded_bytes)
-                case _:
-                    png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
+            png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
 
     def save_png(self, address: str, blast_id: int, width: int, height: int):
         blast_type = Blast(blast_id)
