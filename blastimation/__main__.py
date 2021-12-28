@@ -4,10 +4,7 @@ import sys
 from pathlib import Path
 
 from blast import Blast, decode_blast, decode_blast_lookup
-from splat_img.rgba16 import N64SegRgba16
-from splat_img.rgba32 import N64SegRgba32
-from splat_img.ia8 import N64SegIa8
-from splat_img.ia16 import N64SegIa16
+from tex64 import N64SegRgba16, N64SegRgba32, N64SegIa8, N64SegIa16
 
 
 def blast_get_png_writer(blast_type: Blast):
