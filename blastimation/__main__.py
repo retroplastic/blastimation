@@ -80,19 +80,15 @@ class Blastimation:
         for blast_id, blast_dict in self.blasts.items():
             print(f"  {Blast(blast_id)} ({len(blast_dict)})")
 
-    def save_png_base(self):
-        pass
-
-    def save_png(self, address: str, blast_id: int, width: int, height: int):
-        blast_type = Blast(blast_id)
-        decoded_bytes = self.blasts[blast_id][address]
+    @staticmethod
+    def save_png_base(name: str, blast_type: Blast, decoded_bytes: bytes, width: int, height: int):
         writer_class = blast_get_png_writer(blast_type)
 
         png_dir_path = Path("test")
         png_dir_path.mkdir(exist_ok=True, parents=True)
 
         png_writer = writer_class.get_writer(width, height)
-        png_file_path = png_dir_path / f"{address}.png"
+        png_file_path = png_dir_path / f"{name}.png"
 
         print(f"Writing {png_file_path}...")
 
@@ -102,6 +98,12 @@ class Blastimation:
                     png_writer.write_array(f, decoded_bytes)
                 case _:
                     png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
+
+    def save_png(self, address: str, blast_id: int, width: int, height: int):
+        blast_type = Blast(blast_id)
+        decoded_bytes = self.blasts[blast_id][address]
+
+        self.save_png_base(address, blast_type, decoded_bytes, width, height)
 
     def save_png_lut(self, address: str, blast_id: int, width: int, height: int, lut_addr: str):
         blast_type = Blast(blast_id)
@@ -110,27 +112,13 @@ class Blastimation:
         match blast_type:
             case Blast.BLAST4_IA16:
                 lut = self.luts[128][lut_addr]
-                decoded_bytes = decode_blast_lookup(blast_type, encoded_bytes, lut)
             case Blast.BLAST5_RGBA32:
                 lut = self.luts[256][lut_addr]
-                decoded_bytes = decode_blast_lookup(blast_type, encoded_bytes, lut)
+            case _:
+                return
 
-        writer_class = blast_get_png_writer(blast_type)
-
-        png_dir_path = Path("test")
-        png_dir_path.mkdir(exist_ok=True, parents=True)
-
-        png_writer = writer_class.get_writer(width, height)
-        png_file_path = png_dir_path / f"{address}.png"
-
-        print(f"Writing {png_file_path}...")
-
-        with open(png_file_path, "wb") as f:
-            match blast_type:
-                case Blast.BLAST4_IA16:
-                    png_writer.write_array(f, decoded_bytes)
-                case _:
-                    png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
+        decoded_bytes = decode_blast_lookup(blast_type, encoded_bytes, lut)
+        self.save_png_base(address, blast_type, decoded_bytes, width, height)
 
 
 def print_usage():
