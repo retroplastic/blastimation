@@ -2,6 +2,8 @@
 import struct
 import sys
 
+from blast import Blast
+
 
 def print_usage():
     print("Usage:")
@@ -27,10 +29,10 @@ def main():
     for i in range(ROM_OFFSET, END_OFFSET, 8):
         start = struct.unpack(">I", rom_bytes[i:i+4])[0]
         size = struct.unpack(">H", rom_bytes[i+4:i+6])[0]
-        blast_type = struct.unpack(">H", rom_bytes[i+6:i+8])[0]
+        blast_type = Blast(struct.unpack(">H", rom_bytes[i+6:i+8])[0])
         assert rom_size >= start
 
         if size > 0:
-            print("%06X" % (start + ROM_OFFSET), f"blast{blast_type}", size)
+            print("%06X" % (start + ROM_OFFSET), blast_type, size)
 
 main()
