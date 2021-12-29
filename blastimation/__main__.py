@@ -263,6 +263,11 @@ class Blastimation(QWidget):
                 self.image_data = writer_class.parse_image(decoded_bytes, self.width, self.height, False, True)
 
         image = QImage(self.image_data, self.width, self.height, self.bytes_per_pixel * self.width, self.format)
+
+        # Fix grayscale alpha
+        if self.format == QImage.Format_Grayscale16:
+            image.setAlphaChannel(image)
+
         self.pixmap = QPixmap.fromImage(image)
 
     def resizeEvent(self, event):
