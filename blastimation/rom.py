@@ -46,20 +46,6 @@ class Rom:
 
                 self.images[blast_type.value][address] = BlastImage(blast_type, address, encoded_bytes)
 
-        self.decode()
-
-    def decode(self):
-        for blast_id, images_dict in self.images.items():
-            blast_type = Blast(blast_id)
-            for address, image in images_dict.items():
-                match blast_type:
-                    case Blast.BLAST4_IA16:
-                        image.decode_lut(self.luts[128]["047480"])
-                    case Blast.BLAST5_RGBA32:
-                        image.decode_lut(self.luts[256]["152970"])
-                    case _:
-                        image.decode()
-
     def print_stats(self):
         print("LUTs:")
         for lut_size, lut_dict in self.luts.items():

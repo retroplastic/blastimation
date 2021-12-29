@@ -17,6 +17,9 @@ class BlastImage:
         self.pixmap = None
 
     def decode(self):
+        if self.decoded:
+            return
+
         assert self.encoded
         assert self.blast not in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
         self.decoded = decode_blast(self.blast, self.encoded)
@@ -27,7 +30,6 @@ class BlastImage:
 
     def decode_lut(self, lut: bytes):
         assert self.encoded
-        print(self.blast)
         assert self.blast in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
         self.decoded = decode_blast_lookup(self.blast, self.encoded, lut)
 

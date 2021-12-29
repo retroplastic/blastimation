@@ -35,54 +35,6 @@ class Blastimation(QWidget):
         byte_box.setCurrentIndex(2)
         buttons_layout.addWidget(byte_box)
 
-        self.formats = [
-            QImage.Format_A2BGR30_Premultiplied,
-            QImage.Format_A2RGB30_Premultiplied,
-            QImage.Format_Alpha8,
-            QImage.Format_ARGB32,
-            QImage.Format_ARGB32_Premultiplied,
-            QImage.Format_ARGB4444_Premultiplied,
-            QImage.Format_ARGB6666_Premultiplied,
-            QImage.Format_ARGB8555_Premultiplied,
-            QImage.Format_ARGB8565_Premultiplied,
-            QImage.Format_BGR30,
-            QImage.Format_BGR888,
-            QImage.Format_Grayscale16,
-            QImage.Format_Grayscale8,
-            QImage.Format_Indexed8,
-            QImage.Format_Invalid,
-            QImage.Format_Mono,
-            QImage.Format_MonoLSB,
-            QImage.Format_RGB16,
-            QImage.Format_RGB30,
-            QImage.Format_RGB32,
-            QImage.Format_RGB444,
-            QImage.Format_RGB555,
-            QImage.Format_RGB666,
-            QImage.Format_RGB888,
-            QImage.Format_RGBA16FPx4,
-            QImage.Format_RGBA16FPx4_Premultiplied,
-            QImage.Format_RGBA32FPx4,
-            QImage.Format_RGBA32FPx4_Premultiplied,
-            QImage.Format_RGBA64,
-            QImage.Format_RGBA64_Premultiplied,
-            QImage.Format_RGBA8888,
-            QImage.Format_RGBA8888_Premultiplied,
-            QImage.Format_RGBX16FPx4,
-            QImage.Format_RGBX32FPx4,
-            QImage.Format_RGBX64,
-            QImage.Format_RGBX8888,
-        ]
-
-        self.format_names = []
-        for f in self.formats:
-            self.format_names.append(f.name.decode())
-
-        format_box = QComboBox()
-        format_box.addItems(self.format_names)
-        format_box.setCurrentIndex(30)
-        buttons_layout.addWidget(format_box)
-
         quit_button = QPushButton("Quit", self)
         quit_button.setShortcut(Qt.CTRL | Qt.Key_Q)
         quit_button.clicked.connect(self.close)
@@ -95,17 +47,18 @@ class Blastimation(QWidget):
 
         self.rom = Rom(sys.argv[1])
         self.image = self.rom.images[1]["00DB08"]
+        self.image.decode()
 
         self.images = {
-            "00DB08": [1, 32, 32],
-            "26A1C0": [1, 40, 40],
-            "27DB30": [2, 32, 32],
-            "08EBE8": [3, 64, 64],
-            "33D7D8": [6, 16, 32],
-            "1F0BD8": [4, 64, 32],
-            "1DC880": [5, 32, 32],
-            "011570": [5, 32, 32],
-            "01A778": [5, 32, 32]
+            "00DB08": [1],
+            "26A1C0": [1],
+            "27DB30": [2],
+            "08EBE8": [3],
+            "33D7D8": [6],
+            "1F0BD8": [4],
+            "1DC880": [5],
+            "011570": [5],
+            "01A778": [5]
         }
 
         self.lut_128_key = "047480"
@@ -115,11 +68,32 @@ class Blastimation(QWidget):
         for k in self.images.keys():
             list_model.appendRow(QStandardItem(k))
 
-        list_view = QListView()
-        list_view.setObjectName("listView")
-        list_view.setModel(list_model)
-        list_view.selectionModel().currentChanged.connect(self.on_list_select)
-        list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        blast_list_view = QListView()
+        blast_list_view.setObjectName("listView")
+        blast_list_view.setModel(list_model)
+        blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
+        blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.blast_types = [
+            Blast.BLAST1_RGBA16,
+            Blast.BLAST2_RGBA32,
+            Blast.BLAST3_IA8,
+            Blast.BLAST4_IA16,
+            Blast.BLAST5_RGBA32,
+            Blast.BLAST6_IA8,
+        ]
+
+        blast_type_names = []
+        for t in self.blast_types:
+            blast_type_names.append(t.name)
+
+        blast_filter_box = QComboBox()
+        blast_filter_box.addItems(blast_type_names)
+        blast_filter_box.setCurrentIndex(0)
+
+        blast_list_layout = QVBoxLayout()
+        blast_list_layout.addWidget(blast_filter_box)
+        blast_list_layout.addWidget(blast_list_view)
 
         lut_model = QStandardItemModel(0, 1)
         for k in self.rom.luts[256].keys():
@@ -131,9 +105,16 @@ class Blastimation(QWidget):
         lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
         lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
+        lut_auto_button = QPushButton("Select closest", self)
+        # lut_auto_button.clicked.connect(self.close)
+
+        lut_layout = QVBoxLayout()
+        lut_layout.addWidget(lut_view)
+        lut_layout.addWidget(lut_auto_button)
+
         lists_layout = QHBoxLayout()
-        lists_layout.addWidget(list_view)
-        lists_layout.addWidget(lut_view)
+        lists_layout.addLayout(blast_list_layout)
+        lists_layout.addLayout(lut_layout)
         main_layout.addLayout(lists_layout)
 
         self.current_blast = None
@@ -146,9 +127,9 @@ class Blastimation(QWidget):
 
         match blast_type:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                self.load_image_lut(key, image_data[0], image_data[1], image_data[2])
+                self.load_image_lut(key, image_data[0])
             case _:
-                self.load_image(key, image_data[0], image_data[1], image_data[2])
+                self.load_image(key, image_data[0])
 
         self.update_image_label()
 
@@ -165,21 +146,20 @@ class Blastimation(QWidget):
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
-    def load_image(self, address: str, blast_id: int, width: int, height: int):
+    def load_image(self, address: str, blast_id: int):
+        self.image = self.rom.images[blast_id][address]
+        self.image.decode()
+
+    def load_image_lut(self, address: str, blast_id: int):
         self.image = self.rom.images[blast_id][address]
 
-    def load_image_lut(self, address: str, blast_id: int, width: int, height: int):
-        blast_type = Blast(blast_id)
-
-        match blast_type:
+        match Blast(blast_id):
             case Blast.BLAST4_IA16:
                 lut = self.rom.luts[128][self.lut_128_key]
             case Blast.BLAST5_RGBA32:
                 lut = self.rom.luts[256][self.lut_256_key]
             case _:
                 return
-
-        self.image = self.rom.images[blast_id][address]
         self.image.decode_lut(lut)
 
     def resizeEvent(self, event):
