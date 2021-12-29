@@ -6,8 +6,8 @@ from PySide6.QtGui import QPixmap, QImage, QStandardItemModel, QStandardItem, QI
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox
 
-from rom import Rom, blast_get_png_writer
-from blast import Blast, decode_blast_lookup
+from blastimation.rom import Rom, blast_get_png_writer
+from blastimation.blast import Blast, decode_blast_lookup
 
 
 class Blastimation(QWidget):

@@ -1,8 +1,8 @@
 import struct
 from pathlib import Path
 
-from blast import Blast, decode_blast, decode_blast_lookup, decode_blast0
-from tex64 import N64SegRgba16, N64SegRgba32, N64SegIa8, N64SegIa16
+from blastimation.blast import Blast, decode_blast, decode_blast_lookup, decode_blast0
+from blastimation.tex64 import N64SegRgba16, N64SegRgba32, N64SegIa8, N64SegIa16
 
 
 def blast_get_png_writer(blast_type: Blast):
