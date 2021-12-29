@@ -33,30 +33,8 @@ class App(QWidget):
         self.image = self.rom.images[1]["00DB08"]
         self.image.decode()
 
-        self.images = {
-            "00DB08": [1],
-            "26A1C0": [1],
-            "27DB30": [2],
-            "08EBE8": [3],
-            "33D7D8": [6],
-            "1F0BD8": [4],
-            "1DC880": [5],
-            "011570": [5],
-            "01A778": [5]
-        }
-
         self.lut_128_key = "047480"
         self.lut_256_key = "152970"
-
-        list_model = QStandardItemModel(0, 1)
-        for k in self.images.keys():
-            list_model.appendRow(QStandardItem(k))
-
-        blast_list_view = QListView()
-        blast_list_view.setObjectName("listView")
-        blast_list_view.setModel(list_model)
-        blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
-        blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.blast_types = [
             Blast.BLAST1_RGBA16,
@@ -66,6 +44,7 @@ class App(QWidget):
             Blast.BLAST5_RGBA32,
             Blast.BLAST6_IA8,
         ]
+        self.blast_filter: Blast = Blast.BLAST1_RGBA16
 
         blast_type_names = []
         for t in self.blast_types:
@@ -74,10 +53,23 @@ class App(QWidget):
         blast_filter_box = QComboBox()
         blast_filter_box.addItems(blast_type_names)
         blast_filter_box.setCurrentIndex(0)
+        blast_filter_box.currentIndexChanged.connect(self.on_blast_filter_changed)
+
+        self.blast_list_models = {}
+        for t in self.blast_types:
+            self.blast_list_models[t] = QStandardItemModel(0, 1)
+            for k in self.rom.images[t.value].keys():
+                self.blast_list_models[t].appendRow(QStandardItem(k))
+
+        self.blast_list_view = QListView()
+        self.blast_list_view.setObjectName("listView")
+        self.blast_list_view.setModel(self.blast_list_models[Blast.BLAST1_RGBA16])
+        self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
+        self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         blast_list_layout = QVBoxLayout()
         blast_list_layout.addWidget(blast_filter_box)
-        blast_list_layout.addWidget(blast_list_view)
+        blast_list_layout.addWidget(self.blast_list_view)
 
         lut_model = QStandardItemModel(0, 1)
         for k in self.rom.luts[256].keys():
@@ -104,22 +96,23 @@ class App(QWidget):
         self.current_blast = None
 
     def on_list_select(self, model_index):
-        key = model_index.data()
-        image_data = self.images[key]
+        address = model_index.data()
+        self.image = self.rom.images[self.blast_filter.value][address]
 
-        blast_type = Blast(image_data[0])
-
-        match blast_type:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                self.load_image_lut(key, image_data[0])
+        match self.blast_filter:
+            case Blast.BLAST4_IA16:
+                lut = self.rom.luts[128][self.lut_128_key]
+                self.image.decode_lut(lut)
+            case Blast.BLAST5_RGBA32:
+                lut = self.rom.luts[256][self.lut_256_key]
+                self.image.decode_lut(lut)
             case _:
-                self.load_image(key, image_data[0])
+                self.image.decode()
 
         self.update_image_label()
 
     def on_lut_select(self, model_index):
         self.lut_256_key = model_index.data()
-        print("Selected lut", self.lut_256_key)
         match self.image.blast:
             case Blast.BLAST4_IA16:
                 lut = self.rom.luts[128][self.lut_128_key]
@@ -130,21 +123,10 @@ class App(QWidget):
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
-    def load_image(self, address: str, blast_id: int):
-        self.image = self.rom.images[blast_id][address]
-        self.image.decode()
-
-    def load_image_lut(self, address: str, blast_id: int):
-        self.image = self.rom.images[blast_id][address]
-
-        match Blast(blast_id):
-            case Blast.BLAST4_IA16:
-                lut = self.rom.luts[128][self.lut_128_key]
-            case Blast.BLAST5_RGBA32:
-                lut = self.rom.luts[256][self.lut_256_key]
-            case _:
-                return
-        self.image.decode_lut(lut)
+    def on_blast_filter_changed(self, index):
+        self.blast_filter = self.blast_types[index]
+        self.blast_list_view.setModel(self.blast_list_models[self.blast_filter])
+        self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
 
     def resizeEvent(self, event):
         scaled_size = self.image.pixmap.size()
