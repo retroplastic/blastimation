@@ -73,21 +73,21 @@ class App(QWidget):
         blast_list_layout.addWidget(blast_filter_box)
         blast_list_layout.addWidget(self.blast_list_view)
 
-        lut_model = QStandardItemModel(0, 1)
-        for k in self.rom.luts[256].keys():
-            lut_model.appendRow(QStandardItem("%06X" % k))
+        self.lut_models = {}
+        for lut_size in self.current_lut.keys():
+            self.lut_models[lut_size] = QStandardItemModel(0, 1)
+            for k in self.rom.luts[lut_size].keys():
+                self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
 
-        lut_view = QListView()
-        lut_view.setObjectName("lutView")
-        lut_view.setModel(lut_model)
-        lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
-        lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.lut_view = QListView()
+        self.lut_view.setObjectName("lutView")
+        self.lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         lut_auto_button = QPushButton("Select closest", self)
         lut_auto_button.clicked.connect(self.on_auto_lut)
 
         lut_layout = QVBoxLayout()
-        lut_layout.addWidget(lut_view)
+        lut_layout.addWidget(self.lut_view)
         lut_layout.addWidget(lut_auto_button)
 
         lists_layout = QHBoxLayout()
@@ -127,20 +127,39 @@ class App(QWidget):
         self.blast_list_view.setModel(self.blast_list_models[self.blast_filter])
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
 
+        index = self.blast_list_models[self.blast_filter].index(0, 0)
+        self.blast_list_view.setCurrentIndex(index)
+
+        match self.blast_filter:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast_filter)
+                self.lut_view.setModel(self.lut_models[lut_size])
+                self.lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
+            case _:
+                self.lut_view.setModel(None)
+
     def on_auto_lut(self):
         match self.blast_filter:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.blast_filter)
 
                 last_k = 0
-                for k in self.rom.luts[lut_size].keys().sorted():
+                lut_keys = list(self.rom.luts[lut_size].keys())
+                lut_keys.sort()
+
+                row = -1
+                for k in lut_keys:
                     if k > self.image.address:
                         break
                     last_k = k
+                    row += 1
                 assert last_k != 0
 
                 self.current_lut[lut_size] = last_k
                 print(f"Found auto lut %06X" % last_k)
+
+                index = self.lut_models[lut_size].index(row, 0)
+                self.lut_view.setCurrentIndex(index)
 
     def resizeEvent(self, event):
         scaled_size = self.image.pixmap.size()
