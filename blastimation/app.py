@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
     QListView, QAbstractItemView, QComboBox
 
 from blastimation.rom import Rom
-from blastimation.blast import Blast
+from blastimation.blast import Blast, blast_get_lut_size
 
 
 class App(QWidget):
@@ -82,7 +82,7 @@ class App(QWidget):
         lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         lut_auto_button = QPushButton("Select closest", self)
-        # lut_auto_button.clicked.connect(self.close)
+        lut_auto_button.clicked.connect(self.on_auto_lut)
 
         lut_layout = QVBoxLayout()
         lut_layout.addWidget(lut_view)
@@ -114,12 +114,9 @@ class App(QWidget):
     def on_lut_select(self, model_index):
         self.lut_256_key = model_index.data()
         match self.image.blast:
-            case Blast.BLAST4_IA16:
-                lut = self.rom.luts[128][self.lut_128_key]
-                self.image.decode_lut(lut)
-                self.update_image_label()
-            case Blast.BLAST5_RGBA32:
-                lut = self.rom.luts[256][self.lut_256_key]
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast_filter)
+                lut = self.rom.luts[lut_size][self.lut_256_key]
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
@@ -127,6 +124,30 @@ class App(QWidget):
         self.blast_filter = self.blast_types[index]
         self.blast_list_view.setModel(self.blast_list_models[self.blast_filter])
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
+
+    def on_auto_lut(self):
+        print("Auto lut!")
+        match self.blast_filter:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast_filter)
+                image_address_int = int(self.image.address, 16)
+                print(self.image.address)
+
+                lut_keys_int = []
+                for lut_addr in self.rom.luts[lut_size].keys():
+                    lut_keys_int.append(int(lut_addr, 16))
+                lut_keys_int.sort()
+
+                last_k = 0
+                for k in lut_keys_int:
+                    if k > image_address_int:
+                        break
+                    last_k = k
+                assert last_k != 0
+
+                self.lut_256_key = "%06X" % last_k
+
+                print(f"Found auto lut {self.lut_256_key}")
 
     def resizeEvent(self, event):
         scaled_size = self.image.pixmap.size()

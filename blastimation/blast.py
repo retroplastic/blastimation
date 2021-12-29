@@ -26,6 +26,14 @@ def blast_parse_image(blast_type: Blast, data: bytes,
             return data
 
 
+def blast_get_lut_size(blast_type: Blast):
+    match blast_type:
+        case Blast.BLAST4_IA16:
+            return 128
+        case Blast.BLAST5_RGBA32:
+            return 256
+
+
 def blast_is_grayscale(blast_type: Blast) -> bool:
     match blast_type:
         case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8 | Blast.BLAST4_IA16):
