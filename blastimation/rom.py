@@ -1,7 +1,7 @@
 import struct
 from pathlib import Path
 
-from blast import Blast, decode_blast, decode_blast_lookup
+from blast import Blast, decode_blast, decode_blast_lookup, decode_blast0
 from tex64 import N64SegRgba16, N64SegRgba32, N64SegIa8, N64SegIa16
 
 
@@ -26,6 +26,11 @@ END_OFFSET = 0xCCE0
 class Rom:
     def __init__(self, path: str):
         self.luts = {
+            128: {},
+            256: {}
+        }
+
+        self.luts_decoded = {
             128: {},
             256: {}
         }
@@ -62,6 +67,7 @@ class Rom:
                     case Blast.BLAST0:
                         if size == 128 or size == 256:
                             self.luts[size][address] = encoded_bytes
+                            self.luts_decoded[size][address] = decode_blast0(encoded_bytes)
                     case (Blast.BLAST1_RGBA16 | Blast.BLAST2_RGBA32 | Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
                         self.blasts[blast_type.value][address] = decode_blast(blast_type, encoded_bytes)
                     case _:
