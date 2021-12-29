@@ -2,7 +2,7 @@
 import sys
 
 from PySide6.QtCore import QRect, Qt
-from PySide6.QtGui import QImage, QStandardItemModel, QStandardItem
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox
 
@@ -26,21 +26,6 @@ class Blastimation(QWidget):
 
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(self.image_label)
-
-        buttons_layout = QHBoxLayout()
-
-        byte_box = QComboBox()
-        self.byte_options = ["1", "2", "4", "8", "16", "32"]
-        byte_box.addItems(self.byte_options)
-        byte_box.setCurrentIndex(2)
-        buttons_layout.addWidget(byte_box)
-
-        quit_button = QPushButton("Quit", self)
-        quit_button.setShortcut(Qt.CTRL | Qt.Key_Q)
-        quit_button.clicked.connect(self.close)
-        buttons_layout.addWidget(quit_button)
-        buttons_layout.addStretch()
-        main_layout.addLayout(buttons_layout)
 
         self.setWindowTitle("Blastimation")
         self.resize(300, 200)
