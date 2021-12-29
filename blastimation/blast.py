@@ -27,6 +27,14 @@ def blast_get_png_writer(blast_type: Blast):
             return None
 
 
+def blast_is_grayscale(blast_type: Blast) -> bool:
+    match blast_type:
+        case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8 | Blast.BLAST4_IA16):
+            return True
+        case _:
+            return False
+
+
 def blast_get_depth(blast_type: Blast) -> int:
     match blast_type:
         case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8):

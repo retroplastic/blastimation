@@ -1,7 +1,9 @@
 import unittest
 from pathlib import Path
 
-from blastimation.blast import Blast, decode_blast_lookup, blast_get_png_writer
+import png
+
+from blastimation.blast import Blast, decode_blast_lookup, blast_get_png_writer, blast_is_grayscale
 from blastimation.rom import Rom
 
 
@@ -11,7 +13,8 @@ def save_png_base(name: str, blast_type: Blast, decoded_bytes: bytes, width: int
     png_dir_path = Path("pngs")
     png_dir_path.mkdir(exist_ok=True, parents=True)
 
-    png_writer = writer_class.get_writer(width, height)
+    is_gray = blast_is_grayscale(blast_type)
+    png_writer = png.Writer(width, height, greyscale=is_gray, alpha=True)
     png_file_path = png_dir_path / f"{name}.png"
 
     print(f"Writing {png_file_path}...")

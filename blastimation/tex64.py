@@ -1,7 +1,6 @@
 # Based on splat
 
 from math import ceil
-import png
 
 
 # RRRRRGGG GGBBBBBA
@@ -36,10 +35,6 @@ def iter_image_indexes(width, height,
 
 class N64SegRgba16:
     @staticmethod
-    def get_writer(width, height):
-        return png.Writer(width, height, greyscale=False, alpha=True)
-
-    @staticmethod
     def parse_image(data, width, height, flip_h=False, flip_v=False):
         img = bytearray()
 
@@ -56,10 +51,6 @@ class N64SegRgba32(N64SegRgba16):
 
 
 class N64SegIa4(N64SegRgba16):
-    @staticmethod
-    def get_writer(width, height):
-        return png.Writer(width, height, greyscale=True, alpha=True)
-
     @staticmethod
     def parse_image(data, width, height, flip_h=False, flip_v=False):
         img = bytearray()
