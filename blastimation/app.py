@@ -33,8 +33,10 @@ class App(QWidget):
         self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
         self.image.decode()
 
-        self.lut_128_key: int = int("047480", 16)
-        self.lut_256_key: int = int("152970", 16)
+        self.current_lut = {
+            128: int("047480", 16),
+            256: int("152970", 16)
+        }
 
         self.blast_types = [
             Blast.BLAST1_RGBA16,
@@ -96,16 +98,13 @@ class App(QWidget):
         self.current_blast = None
 
     def on_list_select(self, model_index):
-        address_str = model_index.data()
-        address = int(address_str, 16)
+        address = int(model_index.data(), 16)
         self.image = self.rom.images[self.blast_filter][address]
 
         match self.blast_filter:
-            case Blast.BLAST4_IA16:
-                lut = self.rom.luts[128][self.lut_128_key]
-                self.image.decode_lut(lut)
-            case Blast.BLAST5_RGBA32:
-                lut = self.rom.luts[256][self.lut_256_key]
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast_filter)
+                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
             case _:
                 self.image.decode()
@@ -113,14 +112,13 @@ class App(QWidget):
         self.update_image_label()
 
     def on_lut_select(self, model_index):
-        lut_addr_str = model_index.data()
-        lut_addr = int(lut_addr_str, 16)
+        lut_addr = int(model_index.data(), 16)
 
-        self.lut_256_key = lut_addr
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.blast_filter)
-                lut = self.rom.luts[lut_size][self.lut_256_key]
+                self.current_lut[lut_size] = lut_addr
+                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
@@ -130,7 +128,6 @@ class App(QWidget):
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
 
     def on_auto_lut(self):
-        print("Auto lut!")
         match self.blast_filter:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.blast_filter)
@@ -142,9 +139,8 @@ class App(QWidget):
                     last_k = k
                 assert last_k != 0
 
-                self.lut_256_key = "%06X" % last_k
-
-                print(f"Found auto lut {self.lut_256_key}")
+                self.current_lut[lut_size] = last_k
+                print(f"Found auto lut %06X" % last_k)
 
     def resizeEvent(self, event):
         scaled_size = self.image.pixmap.size()
