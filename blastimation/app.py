@@ -30,7 +30,7 @@ class App(QWidget):
         self.resize(300, 200)
 
         self.rom = Rom(sys.argv[1])
-        self.image = list(self.rom.images[1].values())[0]
+        self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
         self.image.decode()
 
         self.lut_128_key: int = int("047480", 16)
@@ -58,7 +58,7 @@ class App(QWidget):
         self.blast_list_models = {}
         for t in self.blast_types:
             self.blast_list_models[t] = QStandardItemModel(0, 1)
-            for k in self.rom.images[t.value].keys():
+            for k in self.rom.images[t].keys():
                 self.blast_list_models[t].appendRow(QStandardItem("%06X" % k))
 
         self.blast_list_view = QListView()
@@ -98,7 +98,7 @@ class App(QWidget):
     def on_list_select(self, model_index):
         address_str = model_index.data()
         address = int(address_str, 16)
-        self.image = self.rom.images[self.blast_filter.value][address]
+        self.image = self.rom.images[self.blast_filter][address]
 
         match self.blast_filter:
             case Blast.BLAST4_IA16:

@@ -15,12 +15,12 @@ class Rom:
         }
 
         self.images = {
-            1: {},
-            2: {},
-            3: {},
-            4: {},
-            5: {},
-            6: {}
+            Blast.BLAST1_RGBA16: {},
+            Blast.BLAST2_RGBA32: {},
+            Blast.BLAST3_IA8: {},
+            Blast.BLAST4_IA16: {},
+            Blast.BLAST5_RGBA32: {},
+            Blast.BLAST6_IA8: {}
         }
 
         with open(path, "rb") as f:
@@ -44,7 +44,7 @@ class Rom:
                         self.luts[size][address] = encoded_bytes
                     continue
 
-                self.images[blast_type.value][address] = BlastImage(blast_type, address, encoded_bytes)
+                self.images[blast_type][address] = BlastImage(blast_type, address, encoded_bytes)
 
     def print_stats(self):
         print("LUTs:")
