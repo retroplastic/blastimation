@@ -3,7 +3,7 @@ import sys
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
-    QListView, QAbstractItemView, QComboBox
+    QListView, QAbstractItemView, QComboBox, QTabWidget
 
 from blastimation.rom import Rom
 from blastimation.blast import Blast, blast_get_lut_size
@@ -13,8 +13,7 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.image_label = QLabel(self)
-
+        self.image_label = QLabel()
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
 
@@ -92,10 +91,18 @@ class App(QWidget):
         lut_layout.addWidget(self.lut_view)
         lut_layout.addWidget(lut_auto_button)
 
-        lists_layout = QHBoxLayout()
+        single_tab_layout_widget = QWidget()
+        lists_layout = QHBoxLayout(single_tab_layout_widget)
         lists_layout.addLayout(blast_list_layout)
         lists_layout.addWidget(self.lut_widget)
-        main_layout.addLayout(lists_layout)
+
+        tab_widget = QTabWidget()
+        tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        tab_widget.addTab(single_tab_layout_widget, "Single")
+
+        main_layout.addWidget(tab_widget)
+
+        # tab_widget.addTab(, "Composite")
 
         self.current_blast = None
 
