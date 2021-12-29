@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QS
     QListView, QAbstractItemView, QComboBox
 
 from blastimation.rom import Rom
-from blastimation.blast import Blast, decode_blast_lookup, blast_get_png_writer
+from blastimation.blast import Blast, decode_blast_lookup, blast_parse_image
 
 
 class Blastimation(QWidget):
@@ -194,9 +194,7 @@ class Blastimation(QWidget):
         blast_type = Blast(blast_id)
         decoded_bytes = self.rom.blasts[blast_id][address]
 
-        writer_class = blast_get_png_writer(blast_type)
-
-        self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        self.image_data = blast_parse_image(blast_type, decoded_bytes, width, height, False, True)
         self.width = width
         self.height = height
         self.current_blast = blast_type
@@ -226,9 +224,7 @@ class Blastimation(QWidget):
 
         decoded_bytes = decode_blast_lookup(blast_type, self.encoded_bytes, lut)
 
-        writer_class = blast_get_png_writer(blast_type)
-
-        self.image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        self.image_data = blast_parse_image(blast_type, decoded_bytes, width, height, False, True)
         self.width = width
         self.height = height
         self.current_blast = blast_type
@@ -248,13 +244,11 @@ class Blastimation(QWidget):
             case Blast.BLAST4_IA16:
                 lut = self.rom.luts[128][self.lut_128_key]
                 decoded_bytes = decode_blast_lookup(self.current_blast, self.encoded_bytes, lut)
-                writer_class = blast_get_png_writer(self.current_blast)
-                self.image_data = writer_class.parse_image(decoded_bytes, self.width, self.height, False, True)
+                self.image_data = blast_parse_image(self.current_blast, decoded_bytes, self.width, self.height, False, True)
             case Blast.BLAST5_RGBA32:
                 lut = self.rom.luts[256][self.lut_256_key]
                 decoded_bytes = decode_blast_lookup(self.current_blast, self.encoded_bytes, lut)
-                writer_class = blast_get_png_writer(self.current_blast)
-                self.image_data = writer_class.parse_image(decoded_bytes, self.width, self.height, False, True)
+                self.image_data = blast_parse_image(self.current_blast, decoded_bytes, self.width, self.height, False, True)
 
         image = QImage(self.image_data, self.width, self.height, self.bytes_per_pixel * self.width, self.format)
 

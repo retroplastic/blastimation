@@ -33,68 +33,57 @@ def iter_image_indexes(width, height,
             yield x, y, (y * w) + x
 
 
-class N64SegRgba16:
-    @staticmethod
-    def parse_image(data, width, height, flip_h=False, flip_v=False):
-        img = bytearray()
+def parse_rgba16(data, width, height, flip_h=False, flip_v=False):
+    img = bytearray()
 
-        for x, y, i in iter_image_indexes(width, height, 2, 1, flip_h, flip_v):
-            img += bytes(unpack_color(data[i:]))
+    for x, y, i in iter_image_indexes(width, height, 2, 1, flip_h, flip_v):
+        img += bytes(unpack_color(data[i:]))
 
-        return img
+    return img
 
 
-class N64SegRgba32(N64SegRgba16):
-    @staticmethod
-    def parse_image(data, width, height, flip_h=False, flip_v=False):
-        return data
+def parse_rgba32(data, width, height, flip_h=False, flip_v=False):
+    return data
 
 
-class N64SegIa4(N64SegRgba16):
-    @staticmethod
-    def parse_image(data, width, height, flip_h=False, flip_v=False):
-        img = bytearray()
+def parse_ia4(data, width, height, flip_h=False, flip_v=False):
+    img = bytearray()
 
-        for x, y, i in iter_image_indexes(width, height, 0.5, 1, flip_h, flip_v):
-            b = data[i]
+    for x, y, i in iter_image_indexes(width, height, 0.5, 1, flip_h, flip_v):
+        b = data[i]
 
-            h = (b >> 4) & 0xF
-            l = b & 0xF
+        h = (b >> 4) & 0xF
+        l = b & 0xF
 
-            i1 = (h >> 1) & 0xF
-            a1 = (h & 1) * 0xFF
-            i1 = ceil(0xFF * (i1 / 7))
+        i1 = (h >> 1) & 0xF
+        a1 = (h & 1) * 0xFF
+        i1 = ceil(0xFF * (i1 / 7))
 
-            i2 = (l >> 1) & 0xF
-            a2 = (l & 1) * 0xFF
-            i2 = ceil(0xFF * (i2 / 7))
+        i2 = (l >> 1) & 0xF
+        a2 = (l & 1) * 0xFF
+        i2 = ceil(0xFF * (i2 / 7))
 
-            img += bytes((i1, a1, i2, a2))
+        img += bytes((i1, a1, i2, a2))
 
-        return img
+    return img
 
 
-class N64SegIa8(N64SegIa4):
-    @staticmethod
-    def parse_image(data, width, height, flip_h=False, flip_v=False):
-        img = bytearray()
+def parse_ia8(data, width, height, flip_h=False, flip_v=False):
+    img = bytearray()
 
-        for x, y, i in iter_image_indexes(width, height, flip_h=flip_h, flip_v=flip_v):
-            b = data[i]
+    for x, y, i in iter_image_indexes(width, height, flip_h=flip_h, flip_v=flip_v):
+        b = data[i]
 
-            i = (b >> 4) & 0xF
-            a = b & 0xF
+        i = (b >> 4) & 0xF
+        a = b & 0xF
 
-            i = ceil(0xFF * (i / 15))
-            a = ceil(0xFF * (a / 15))
+        i = ceil(0xFF * (i / 15))
+        a = ceil(0xFF * (a / 15))
 
-            img += bytes((i, a))
+        img += bytes((i, a))
 
-        return img
+    return img
 
 
-class N64SegIa16(N64SegIa4):
-    @staticmethod
-    def parse_image(data, width, height, flip_h=False, flip_v=False):
-        return data
-
+def parse_ia16(data, width, height, flip_h=False, flip_v=False):
+    return data

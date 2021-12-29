@@ -3,13 +3,11 @@ from pathlib import Path
 
 import png
 
-from blastimation.blast import Blast, decode_blast_lookup, blast_get_png_writer, blast_is_grayscale
+from blastimation.blast import Blast, decode_blast_lookup, blast_is_grayscale, blast_parse_image
 from blastimation.rom import Rom
 
 
 def save_png_base(name: str, blast_type: Blast, decoded_bytes: bytes, width: int, height: int):
-    writer_class = blast_get_png_writer(blast_type)
-
     png_dir_path = Path("pngs")
     png_dir_path.mkdir(exist_ok=True, parents=True)
 
@@ -20,7 +18,7 @@ def save_png_base(name: str, blast_type: Blast, decoded_bytes: bytes, width: int
     print(f"Writing {png_file_path}...")
 
     with open(png_file_path, "wb") as f:
-        png_writer.write_array(f, writer_class.parse_image(decoded_bytes, width, height, False, True))
+        png_writer.write_array(f, blast_parse_image(blast_type, decoded_bytes, width, height, False, True))
 
 
 def save_png(rom: Rom, address: str, blast_id: int, width: int, height: int):

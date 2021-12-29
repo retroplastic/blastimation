@@ -4,7 +4,7 @@ from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import QApplication
 from tabulate import tabulate
 
-from blastimation.blast import Blast, blast_get_png_writer
+from blastimation.blast import Blast, blast_parse_image
 from blastimation.rom import Rom
 
 
@@ -48,9 +48,7 @@ class TestQImage(unittest.TestCase):
 
         decoded_bytes = rom.blasts[blast_id][address]
 
-        blast_type = Blast(blast_id)
-        writer_class = blast_get_png_writer(blast_type)
-        image_data = writer_class.parse_image(decoded_bytes, width, height, False, True)
+        image_data = blast_parse_image(Blast(blast_id), decoded_bytes, width, height, False, True)
 
         bytes_per_pixel = 2
         image_format = QImage.Format_Grayscale8
