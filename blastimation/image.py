@@ -12,40 +12,38 @@ class BlastImage:
 
         self.blast = blast_type
         self.encoded = encoded
-        self.decoded = None
-        self.raw = None
         self.pixmap = None
 
     def decode(self):
-        if self.decoded:
+        if self.pixmap:
             return
 
         assert self.encoded
         assert self.blast not in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
-        self.decoded = decode_blast(self.blast, self.encoded)
+        decoded = decode_blast(self.blast, self.encoded)
 
-        self.guess_resolution()
-        self.parse()
-        self.generate_pixmap()
+        if not self.width or not self.height:
+            self.guess_resolution(decoded)
+        raw = self.parse(decoded)
+        self.generate_pixmap(raw)
 
     def decode_lut(self, lut: bytes):
         assert self.encoded
         assert self.blast in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
-        self.decoded = decode_blast_lookup(self.blast, self.encoded, lut)
+        decoded = decode_blast_lookup(self.blast, self.encoded, lut)
 
-        self.guess_resolution()
-        self.parse()
-        self.generate_pixmap()
+        if not self.width or not self.height:
+            self.guess_resolution(decoded)
+        raw = self.parse(decoded)
+        self.generate_pixmap(raw)
 
-    def guess_resolution(self):
-        assert self.decoded
-        self.width, self.height = blast_guess_resolution(self.blast, len(self.decoded))
+    def guess_resolution(self, decoded: bytes):
+        self.width, self.height = blast_guess_resolution(self.blast, len(decoded))
 
-    def parse(self):
-        assert self.decoded
-        self.raw = blast_parse_image(self.blast, self.decoded, self.width, self.height, False, True)
+    def parse(self, decoded: bytes) -> bytes:
+        return blast_parse_image(self.blast, decoded, self.width, self.height, False, True)
 
-    def generate_pixmap(self):
+    def generate_pixmap(self, raw: bytes):
         match self.blast:
             case (Blast.BLAST6_IA8 | Blast.BLAST3_IA8 | Blast.BLAST4_IA16):
                 bytes_per_pixel = 2
@@ -54,7 +52,7 @@ class BlastImage:
                 bytes_per_pixel = 4
                 image_format = QImage.Format_RGBA8888
 
-        image = QImage(self.raw, self.width, self.height, bytes_per_pixel * self.width, image_format)
+        image = QImage(raw, self.width, self.height, bytes_per_pixel * self.width, image_format)
 
         # Fix grayscale alpha
         if image_format == QImage.Format_Grayscale16:
