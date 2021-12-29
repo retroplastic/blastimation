@@ -27,7 +27,7 @@ class App(QWidget):
         main_layout.addWidget(self.image_label)
 
         self.setWindowTitle("Blastimation")
-        self.resize(300, 200)
+        self.resize(960, 1080)
 
         self.rom = Rom(sys.argv[1])
         self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
@@ -86,13 +86,15 @@ class App(QWidget):
         lut_auto_button = QPushButton("Select closest", self)
         lut_auto_button.clicked.connect(self.on_auto_lut)
 
-        lut_layout = QVBoxLayout()
+        self.lut_widget = QWidget()
+        self.lut_widget.hide()
+        lut_layout = QVBoxLayout(self.lut_widget)
         lut_layout.addWidget(self.lut_view)
         lut_layout.addWidget(lut_auto_button)
 
         lists_layout = QHBoxLayout()
         lists_layout.addLayout(blast_list_layout)
-        lists_layout.addLayout(lut_layout)
+        lists_layout.addWidget(self.lut_widget)
         main_layout.addLayout(lists_layout)
 
         self.current_blast = None
@@ -135,7 +137,9 @@ class App(QWidget):
                 lut_size = blast_get_lut_size(self.blast_filter)
                 self.lut_view.setModel(self.lut_models[lut_size])
                 self.lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
+                self.lut_widget.show()
             case _:
+                self.lut_widget.hide()
                 self.lut_view.setModel(None)
 
     def on_auto_lut(self):
