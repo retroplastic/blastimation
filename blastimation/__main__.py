@@ -136,11 +136,8 @@ class Blastimation(QWidget):
         list_view = QListView()
         list_view.setObjectName("listView")
         list_view.setModel(list_model)
-        list_view.clicked.connect(self.on_list_select)
-        list_view.activated.connect(self.on_list_select)
+        list_view.selectionModel().currentChanged.connect(self.on_list_select)
         list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        list_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        list_view.setSelectionBehavior(QAbstractItemView.SelectItems)
 
         lut_model = QStandardItemModel(0, 1)
         for k in self.rom.luts[256].keys():
@@ -149,11 +146,8 @@ class Blastimation(QWidget):
         lut_view = QListView()
         lut_view.setObjectName("lutView")
         lut_view.setModel(lut_model)
-        lut_view.clicked.connect(self.on_lut_select)
-        lut_view.activated.connect(self.on_lut_select)
+        lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
         lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        lut_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        lut_view.setSelectionBehavior(QAbstractItemView.SelectItems)
 
         lists_layout = QHBoxLayout()
         lists_layout.addWidget(list_view)
