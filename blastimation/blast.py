@@ -1,5 +1,6 @@
 import struct
 from enum import Enum
+from blastimation.tex64 import N64SegRgba16, N64SegRgba32, N64SegIa8, N64SegIa16
 
 
 class Blast(Enum):
@@ -10,6 +11,20 @@ class Blast(Enum):
     BLAST4_IA16 = 4
     BLAST5_RGBA32 = 5
     BLAST6_IA8 = 6
+
+
+def blast_get_png_writer(blast_type: Blast):
+    match blast_type:
+        case Blast.BLAST1_RGBA16:
+            return N64SegRgba16
+        case (Blast.BLAST2_RGBA32 | Blast.BLAST5_RGBA32):
+            return N64SegRgba32
+        case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
+            return N64SegIa8
+        case Blast.BLAST4_IA16:
+            return N64SegIa16
+        case _:
+            return None
 
 
 def blast_get_depth(blast_type: Blast) -> int:
