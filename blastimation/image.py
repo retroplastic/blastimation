@@ -4,15 +4,15 @@ from blastimation.blast import Blast, blast_guess_resolution, blast_parse_image,
 
 
 class BlastImage:
-    def __init__(self, blast_type: Blast, address: str, encoded: bytes,
+    def __init__(self, blast_type: Blast, address: int, encoded: bytes,
                  width: int = 0, height: int = 0):
-        self.address = address
-        self.width = width
-        self.height = height
+        self.address: int = address
+        self.width: int = width
+        self.height: int = height
 
-        self.blast = blast_type
-        self.encoded = encoded
-        self.pixmap = None
+        self.blast: Blast = blast_type
+        self.encoded: bytes = encoded
+        self.pixmap: QPixmap = None
 
     def decode(self):
         if self.pixmap:

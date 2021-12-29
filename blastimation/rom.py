@@ -34,13 +34,13 @@ class Rom:
             assert len(rom_bytes) >= start
 
             if size > 0:
-                address = "%06X" % (start + ROM_OFFSET)
+                address: int = start + ROM_OFFSET
                 encoded_bytes = rom_bytes[start + ROM_OFFSET: start + ROM_OFFSET + size]
 
                 assert len(encoded_bytes) == size
 
                 if blast_type == Blast.BLAST0:
-                    if size == 128 or size == 256:
+                    if size in [128, 256]:
                         self.luts[size][address] = encoded_bytes
                     continue
 

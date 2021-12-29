@@ -30,11 +30,11 @@ class App(QWidget):
         self.resize(300, 200)
 
         self.rom = Rom(sys.argv[1])
-        self.image = self.rom.images[1]["00DB08"]
+        self.image = list(self.rom.images[1].values())[0]
         self.image.decode()
 
-        self.lut_128_key = "047480"
-        self.lut_256_key = "152970"
+        self.lut_128_key: int = int("047480", 16)
+        self.lut_256_key: int = int("152970", 16)
 
         self.blast_types = [
             Blast.BLAST1_RGBA16,
@@ -59,7 +59,7 @@ class App(QWidget):
         for t in self.blast_types:
             self.blast_list_models[t] = QStandardItemModel(0, 1)
             for k in self.rom.images[t.value].keys():
-                self.blast_list_models[t].appendRow(QStandardItem(k))
+                self.blast_list_models[t].appendRow(QStandardItem("%06X" % k))
 
         self.blast_list_view = QListView()
         self.blast_list_view.setObjectName("listView")
@@ -73,7 +73,7 @@ class App(QWidget):
 
         lut_model = QStandardItemModel(0, 1)
         for k in self.rom.luts[256].keys():
-            lut_model.appendRow(QStandardItem(k))
+            lut_model.appendRow(QStandardItem("%06X" % k))
 
         lut_view = QListView()
         lut_view.setObjectName("lutView")
@@ -96,7 +96,8 @@ class App(QWidget):
         self.current_blast = None
 
     def on_list_select(self, model_index):
-        address = model_index.data()
+        address_str = model_index.data()
+        address = int(address_str, 16)
         self.image = self.rom.images[self.blast_filter.value][address]
 
         match self.blast_filter:
@@ -112,7 +113,10 @@ class App(QWidget):
         self.update_image_label()
 
     def on_lut_select(self, model_index):
-        self.lut_256_key = model_index.data()
+        lut_addr_str = model_index.data()
+        lut_addr = int(lut_addr_str, 16)
+
+        self.lut_256_key = lut_addr
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.blast_filter)
@@ -130,17 +134,10 @@ class App(QWidget):
         match self.blast_filter:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.blast_filter)
-                image_address_int = int(self.image.address, 16)
-                print(self.image.address)
-
-                lut_keys_int = []
-                for lut_addr in self.rom.luts[lut_size].keys():
-                    lut_keys_int.append(int(lut_addr, 16))
-                lut_keys_int.sort()
 
                 last_k = 0
-                for k in lut_keys_int:
-                    if k > image_address_int:
+                for k in self.rom.luts[lut_size].keys().sorted():
+                    if k > self.image.address:
                         break
                     last_k = k
                 assert last_k != 0
