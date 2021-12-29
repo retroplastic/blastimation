@@ -64,6 +64,53 @@ def blast_get_decoded_extension(blast_type: Blast) -> str:
             return "%s%d" % (blast_get_format(blast_type), blast_get_depth(blast_type))
 
 
+# This cannot be reliably determined by the data and needs to be
+# tracked manually in the splat yaml.
+def blast_guess_resolution(blast_type: Blast, size: int) -> tuple[int, int]:
+    match blast_type:
+        case Blast.BLAST1_RGBA16:
+            match size:
+                case 16:   return 4, 2
+                case 512:  return 16, 16
+                case 1024: return 16, 32
+                case 2048: return 32, 32
+                case 4096: return 64, 32
+                case 8192: return 64, 64
+                case 3200: return 40, 40
+                case _:    return 32, int(size / (32 * 2))
+        case Blast.BLAST2_RGBA32:
+            match size:
+                case 256:  return 8, 8
+                case 512:  return 8, 16
+                case 1024: return 16, 16
+                case 2048: return 16, 32
+                case 4096: return 32, 32
+                case 8192: return 64, 32
+                case _:    return 32, int(size / (32 * 4))
+        case Blast.BLAST3_IA8:
+            match size:
+                case 1024: return 32, 32
+                case 2048: return 32, 64
+                case 4096: return 64, 64
+                case _:    return 32, int(size / 32)
+        case Blast.BLAST4_IA16:
+            match size:
+                case 1024: return 16, 32
+                case 2048: return 32, 32
+                case 4096: return 32, 64
+                case 8192: return 64, 64
+                case _:    return 32, int(size / (32 * 2))
+        case Blast.BLAST5_RGBA32:
+            match size:
+                case 1024: return 16, 16
+                case 2048: return 32, 16
+                case 4096: return 32, 32
+                case 8192: return 64, 32
+                case _:    return 32, int(size / (32 * 4))
+        case Blast.BLAST6_IA8:
+            return 16, int(size / 16)
+
+
 def decode_blast_generic(encoded: bytes, decode_single_fun, element_size: int,
                          loop_back_and: int, loop_back_shift: int) -> bytes:
     decoded_bytes = bytearray()
