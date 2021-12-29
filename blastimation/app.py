@@ -12,25 +12,8 @@ from blastimation.blast import Blast, blast_get_lut_size
 class App(QWidget):
     def __init__(self):
         super().__init__()
-
-        self.image_label = QLabel()
-        self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.image_label.setAlignment(Qt.AlignCenter)
-
-        screen_geometry: QRect = self.screen().geometry()
-        self.image_label.setMinimumSize(
-            screen_geometry.width() / 8, screen_geometry.height() / 8
-        )
-
-        main_layout = QVBoxLayout(self)
-        main_layout.addWidget(self.image_label)
-
         self.setWindowTitle("Blastimation")
         self.resize(960, 1080)
-
-        self.rom = Rom(sys.argv[1])
-        self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
-        self.image.decode()
 
         self.current_lut = {
             128: int("047480", 16),
@@ -47,6 +30,45 @@ class App(QWidget):
         ]
         self.blast_filter: Blast = Blast.BLAST1_RGBA16
 
+        self.blast_list_models = {}
+        self.lut_models = {}
+
+        self.rom = Rom(sys.argv[1])
+        self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
+        self.image.decode()
+
+        # Global widgets
+        self.image_label = QLabel()
+        self.blast_list_view = QListView()
+        self.lut_view = QListView()
+        self.lut_widget = QWidget()
+
+        self.init_models()
+        self.init_widgets()
+
+    def init_models(self):
+        for t in self.blast_types:
+            self.blast_list_models[t] = QStandardItemModel(0, 1)
+            for k in self.rom.images[t].keys():
+                self.blast_list_models[t].appendRow(QStandardItem("%06X" % k))
+
+        for lut_size in self.current_lut.keys():
+            self.lut_models[lut_size] = QStandardItemModel(0, 1)
+            for k in self.rom.luts[lut_size].keys():
+                self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
+
+    def init_widgets(self):
+
+        self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        screen_geometry: QRect = self.screen().geometry()
+        self.image_label.setMinimumSize(
+            screen_geometry.width() / 8, screen_geometry.height() / 8
+        )
+
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.image_label)
+
         blast_type_names = []
         for t in self.blast_types:
             blast_type_names.append(t.name)
@@ -56,13 +78,6 @@ class App(QWidget):
         blast_filter_box.setCurrentIndex(0)
         blast_filter_box.currentIndexChanged.connect(self.on_blast_filter_changed)
 
-        self.blast_list_models = {}
-        for t in self.blast_types:
-            self.blast_list_models[t] = QStandardItemModel(0, 1)
-            for k in self.rom.images[t].keys():
-                self.blast_list_models[t].appendRow(QStandardItem("%06X" % k))
-
-        self.blast_list_view = QListView()
         self.blast_list_view.setObjectName("listView")
         self.blast_list_view.setModel(self.blast_list_models[Blast.BLAST1_RGBA16])
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
@@ -72,20 +87,12 @@ class App(QWidget):
         blast_list_layout.addWidget(blast_filter_box)
         blast_list_layout.addWidget(self.blast_list_view)
 
-        self.lut_models = {}
-        for lut_size in self.current_lut.keys():
-            self.lut_models[lut_size] = QStandardItemModel(0, 1)
-            for k in self.rom.luts[lut_size].keys():
-                self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
-
-        self.lut_view = QListView()
         self.lut_view.setObjectName("lutView")
         self.lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         lut_auto_button = QPushButton("Select closest", self)
         lut_auto_button.clicked.connect(self.on_auto_lut)
 
-        self.lut_widget = QWidget()
         self.lut_widget.hide()
         lut_layout = QVBoxLayout(self.lut_widget)
         lut_layout.addWidget(self.lut_view)
@@ -101,10 +108,6 @@ class App(QWidget):
         tab_widget.addTab(single_tab_layout_widget, "Single")
 
         main_layout.addWidget(tab_widget)
-
-        # tab_widget.addTab(, "Composite")
-
-        self.current_blast = None
 
     def on_list_select(self, model_index):
         address = int(model_index.data(), 16)
