@@ -64,22 +64,6 @@ def blast_get_decoded_extension(blast_type: Blast) -> str:
             return "%s%d" % (blast_get_format(blast_type), blast_get_depth(blast_type))
 
 
-# 802A5E10 (061650)
-# just a memcpy from a0 to a3
-def decode_blast0(encoded: bytes) -> bytes:
-    decoded = bytearray()
-
-    for pos in range(len(encoded) >> 3):
-        decoded.extend(encoded[pos * 8: (pos + 1) * 8])
-
-    # Fill with zeros to encoded length
-    zeros_to_fill = len(encoded) - len(decoded)
-    zeros = bytearray(zeros_to_fill)
-    decoded.extend(zeros)
-
-    return decoded
-
-
 def decode_blast_generic(encoded: bytes, decode_single_fun, element_size: int,
                          loop_back_and: int, loop_back_shift: int) -> bytes:
     decoded_bytes = bytearray()
@@ -212,7 +196,7 @@ def decode_blast6(encoded: bytes) -> bytes:
 def decode_blast(blast_type: Blast, encoded: bytes) -> bytes:
     match blast_type:
         case Blast.BLAST0:
-            return decode_blast0(encoded)
+            return encoded
         case Blast.BLAST1_RGBA16:
             return decode_blast1(encoded)
         case Blast.BLAST2_RGBA32:
