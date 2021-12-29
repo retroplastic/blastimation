@@ -1,7 +1,7 @@
 import struct
 
-from blastimation.blast import Blast, decode_blast
-
+from blastimation.blast import Blast
+from blastimation.image import BlastImage
 
 ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
@@ -14,7 +14,7 @@ class Rom:
             256: {}
         }
 
-        self.blasts = {
+        self.images = {
             1: {},
             2: {},
             3: {},
@@ -39,14 +39,26 @@ class Rom:
 
                 assert len(encoded_bytes) == size
 
+                if blast_type == Blast.BLAST0:
+                    if size == 128 or size == 256:
+                        self.luts[size][address] = encoded_bytes
+                    continue
+
+                self.images[blast_type.value][address] = BlastImage(blast_type, address, encoded_bytes)
+
+        self.decode()
+
+    def decode(self):
+        for blast_id, images_dict in self.images.items():
+            blast_type = Blast(blast_id)
+            for address, image in images_dict.items():
                 match blast_type:
-                    case Blast.BLAST0:
-                        if size == 128 or size == 256:
-                            self.luts[size][address] = encoded_bytes
-                    case (Blast.BLAST1_RGBA16 | Blast.BLAST2_RGBA32 | Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
-                        self.blasts[blast_type.value][address] = decode_blast(blast_type, encoded_bytes)
+                    case Blast.BLAST4_IA16:
+                        image.decode_lut(self.luts[128]["047480"])
+                    case Blast.BLAST5_RGBA32:
+                        image.decode_lut(self.luts[256]["152970"])
                     case _:
-                        self.blasts[blast_type.value][address] = encoded_bytes
+                        image.decode()
 
     def print_stats(self):
         print("LUTs:")
@@ -56,5 +68,5 @@ class Rom:
                 print("    ", addr)
 
         print("Blasts:")
-        for blast_id, blast_dict in self.blasts.items():
+        for blast_id, blast_dict in self.images.items():
             print(f"  {Blast(blast_id)} ({len(blast_dict)})")
