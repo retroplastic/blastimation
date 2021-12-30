@@ -12,6 +12,10 @@ class BlastImage:
 
         self.blast: Blast = blast_type
         self.encoded: bytes = encoded
+
+        self.encoded_size: int = len(encoded)
+        self.decoded_size: int = 0
+
         self.pixmap: QPixmap = None
         self.qimage: QImage = None
 
@@ -23,6 +27,8 @@ class BlastImage:
         assert self.blast not in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
         decoded = decode_blast(self.blast, self.encoded)
 
+        self.decoded_size = len(decoded)
+
         if not self.width or not self.height:
             self.guess_resolution(decoded)
         raw = self.parse(decoded)
@@ -32,6 +38,8 @@ class BlastImage:
         assert self.encoded
         assert self.blast in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
         decoded = decode_blast_lookup(self.blast, self.encoded, lut)
+
+        self.decoded_size = len(decoded)
 
         if not self.width or not self.height:
             self.guess_resolution(decoded)

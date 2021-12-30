@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
-from blastimation.blast import Blast, blast_get_lut_size
+from blastimation.blast import Blast, blast_get_lut_size, blast_get_format
 
 
 class App(QWidget):
@@ -32,6 +32,16 @@ class App(QWidget):
         ]
         self.blast_filter: Blast = Blast.BLAST1_RGBA16
 
+        self.single_model = QStandardItemModel(0, 8)
+        self.single_model.setHeaderData(0, Qt.Horizontal, "Start")
+        self.single_model.setHeaderData(1, Qt.Horizontal, "Name")
+        self.single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
+        self.single_model.setHeaderData(3, Qt.Horizontal, "Format")
+        self.single_model.setHeaderData(4, Qt.Horizontal, "Width")
+        self.single_model.setHeaderData(5, Qt.Horizontal, "Height")
+        self.single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        self.single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
+
         self.blast_list_models = {}
         self.lut_models = {}
         self.composite_models = {}
@@ -51,6 +61,18 @@ class App(QWidget):
         self.init_widgets()
 
     def init_models(self):
+        for blast_type in self.blast_types:
+            for addr, image in self.rom.images[blast_type].items():
+                self.single_model.insertRow(0)
+                self.single_model.setData(self.single_model.index(0, 0), "0x%06X" % addr)
+                self.single_model.setData(self.single_model.index(0, 1), "?")
+                self.single_model.setData(self.single_model.index(0, 2), blast_type.name)
+                self.single_model.setData(self.single_model.index(0, 3), blast_get_format(blast_type))
+                self.single_model.setData(self.single_model.index(0, 4), image.width)
+                self.single_model.setData(self.single_model.index(0, 5), image.height)
+                self.single_model.setData(self.single_model.index(0, 6), image.encoded_size)
+                self.single_model.setData(self.single_model.index(0, 7), image.decoded_size)
+
         for t in self.blast_types:
             self.blast_list_models[t] = QStandardItemModel(0, 1)
             for k in self.rom.images[t].keys():
