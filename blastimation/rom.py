@@ -11,7 +11,7 @@ ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
 
 
-class Comp(Enum):
+class CompType(Enum):
     TopBottom = 0  # Top Bottom (Actually Bottom Top, as we flip)
     RightLeft = 1  # Right Left
     Quad = 2
@@ -188,7 +188,7 @@ class Rom:
         for blast_type_str, comp_types_dict in composites_yaml.items():
             blast_type = getattr(Blast, blast_type_str)
             for comp_type_str, comp_list in comp_types_dict.items():
-                comp_type = getattr(Comp, comp_type_str)
+                comp_type = getattr(CompType, comp_type_str)
                 for comp in comp_list:
                     if isinstance(comp[-1], str):
                         name = comp[-1]

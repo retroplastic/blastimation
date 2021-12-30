@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
     QListView, QAbstractItemView, QComboBox, QTabWidget
 
 from blastimation.image import BlastImage
-from blastimation.rom import Rom, Comp
+from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size
 
 
@@ -147,7 +147,7 @@ class App(QWidget):
             self.rom.images[self.blast_filter][composite[1]]
         ]
 
-        if comp_type == Comp.Quad:
+        if comp_type == CompType.Quad:
             images.extend([
                 self.rom.images[self.blast_filter][composite[2]],
                 self.rom.images[self.blast_filter][composite[3]]
@@ -157,13 +157,13 @@ class App(QWidget):
             i.decode()
 
         match comp_type:
-            case Comp.TopBottom:
+            case CompType.TopBottom:
                 width = images[0].width
                 height = images[0].height * 2
-            case Comp.RightLeft:
+            case CompType.RightLeft:
                 width = images[0].width * 2
                 height = images[0].height
-            case Comp.Quad:
+            case CompType.Quad:
                 width = images[0].width * 2
                 height = images[0].height * 2
             case _:
@@ -176,13 +176,13 @@ class App(QWidget):
         painter = QPainter(composite_image)
 
         match comp_type:
-            case Comp.TopBottom:
+            case CompType.TopBottom:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(0, height/2), images[0].qimage)
-            case Comp.RightLeft:
+            case CompType.RightLeft:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(width / 2, 0), images[0].qimage)
-            case Comp.Quad:
+            case CompType.Quad:
                 painter.drawImage(QPoint(0, 0), images[2].qimage)
                 painter.drawImage(QPoint(width / 2, 0), images[3].qimage)
                 painter.drawImage(QPoint(0, height / 2), images[0].qimage)

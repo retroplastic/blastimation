@@ -3,7 +3,7 @@ import unittest
 import ryaml
 
 from blastimation.blast import Blast
-from blastimation.rom import Comp, Rom
+from blastimation.rom import CompType, Rom
 
 
 def composites_to_yaml(composites) -> list[str]:
@@ -37,27 +37,27 @@ class Test(unittest.TestCase):
         old_composites = {
             Blast.BLAST1_RGBA16: {
                 # Vehicles
-                0x1D8420: [Comp.TopBottom, 0x1D8970],  # Ramdozer
-                0x1DA338: [Comp.TopBottom, 0x1DA898],  # Cyclone Suit
-                0x1FB810: [Comp.RightLeft, 0x1FBEC8],
+                0x1D8420: [CompType.TopBottom, 0x1D8970],  # Ramdozer
+                0x1DA338: [CompType.TopBottom, 0x1DA898],  # Cyclone Suit
+                0x1FB810: [CompType.RightLeft, 0x1FBEC8],
             },
             Blast.BLAST4_IA16: {
-                0x20CFF8: [Comp.Quad, 0x20DB40, 0x20E758, 0x20F120],  # Lake
+                0x20CFF8: [CompType.Quad, 0x20DB40, 0x20E758, 0x20F120],  # Lake
             }
         }
 
         composites = {
             Blast.BLAST1_RGBA16: {
-                Comp.TopBottom: [
+                CompType.TopBottom: [
                     [0x1D8420, 0x1D8970, "Ramdozer"],
                     [0x1DA338, 0x1DA898, "Cyclone Suit"],
                 ],
-                Comp.RightLeft: [
+                CompType.RightLeft: [
                     [0x1FB810, 0x1FBEC8, "B1_RL_1FB810"],
                 ]
             },
             Blast.BLAST4_IA16: {
-                Comp.Quad: [
+                CompType.Quad: [
                     [0x20CFF8, 0x20DB40, 0x20E758, 0x20F120, "Lake"],
                 ]
             }
