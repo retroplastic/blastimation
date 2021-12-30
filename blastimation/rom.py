@@ -118,27 +118,31 @@ class Rom:
                 self.images[blast_type][address] = BlastImage(blast_type, address, encoded_bytes)
 
     def init_composite_images(self):
-        # Vehicles
-        self.composites[Blast.BLAST1_RGBA16][0x1D8420] = [CompType.TB, 0x1D8970]
-        self.composites[Blast.BLAST1_RGBA16][0x1DA338] = [CompType.TB, 0x1DA898]
-        self.composites[Blast.BLAST1_RGBA16][0x1DAE40] = [CompType.TB, 0x1F0498]
-        self.composites[Blast.BLAST1_RGBA16][0x0D0288] = [CompType.RL, 0x0D4410]
-        self.composites[Blast.BLAST1_RGBA16][0x0F25B8] = [CompType.RL, 0x0F27A8]
-        self.composites[Blast.BLAST1_RGBA16][0x1FB810] = [CompType.RL, 0x1FBEC8]
-        self.composites[Blast.BLAST1_RGBA16][0x278520] = [CompType.TB, 0x278890]
+        self.composites.update({
+            Blast.BLAST1_RGBA16: {
+                # Vehicles
+                0x1D8420: [CompType.TB, 0x1D8970],
+                0x1DA338: [CompType.TB, 0x1DA898],
+                0x1DAE40: [CompType.TB, 0x1F0498],
+                0x0D0288: [CompType.RL, 0x0D4410],
+                0x0F25B8: [CompType.RL, 0x0F27A8],
+                0x1FB810: [CompType.RL, 0x1FBEC8],
+                0x278520: [CompType.TB, 0x278890],
 
-        self.composites[Blast.BLAST1_RGBA16][0x2AC268] = [CompType.TB, 0x2AC748]
-        self.composites[Blast.BLAST1_RGBA16][0x2ACB18] = [CompType.TB, 0x2ACF88]
-        self.composites[Blast.BLAST1_RGBA16][0x2AD370] = [CompType.TB, 0x2AD6F8]
+                0x2AC268: [CompType.TB, 0x2AC748],
+                0x2ACB18: [CompType.TB, 0x2ACF88],
+                0x2AD370: [CompType.TB, 0x2AD6F8],
 
-        # $ animation
-        self.composites[Blast.BLAST1_RGBA16][0x2ADAA0] = [CompType.TB, 0x2ADCF8]
-        self.composites[Blast.BLAST1_RGBA16][0x2ADFB0] = [CompType.TB, 0x2AE208]
-        self.composites[Blast.BLAST1_RGBA16][0x2AE4A8] = [CompType.TB, 0x2AE828]
-        self.composites[Blast.BLAST1_RGBA16][0x2AEC00] = [CompType.TB, 0x2AEF40]
-        self.composites[Blast.BLAST1_RGBA16][0x2AF290] = [CompType.TB, 0x2AF520]
+                # $ animation
+                0x2ADAA0: [CompType.TB, 0x2ADCF8],
+                0x2ADFB0: [CompType.TB, 0x2AE208],
+                0x2AE4A8: [CompType.TB, 0x2AE828],
+                0x2AEC00: [CompType.TB, 0x2AEF40],
+                0x2AF290: [CompType.TB, 0x2AF520],
 
-        self.composites[Blast.BLAST1_RGBA16][0x089EE8] = [CompType.TB, 0x08A840]
+                0x089EE8: [CompType.TB, 0x08A840]
+            }
+        })
 
     def print_stats(self):
         print("LUTs:")
