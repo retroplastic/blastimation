@@ -22,3 +22,15 @@ class Composite:
         #    return self.name
 
         return "0x%06X" % self.start
+
+    def width(self, images):
+        return 0
+
+    def height(self, images):
+        return 0
+
+    def encoded_size(self, images):
+        return 0
+
+    def decoded_size(self, images):
+        return 0

@@ -40,11 +40,12 @@ class App(QWidget):
 
         # Global widgets
         self.image_label = QLabel()
-        self.composite_list_view = QListView()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
         self.single_view = QTreeView()
         self.single_proxy_model = QSortFilterProxyModel()
+        self.composite_view = QTreeView()
+        self.composite_proxy_model = QSortFilterProxyModel()
 
         self.init_models()
         self.init_widgets()
@@ -74,6 +75,33 @@ class App(QWidget):
 
         return single_model
 
+    def make_composite_model(self):
+        single_model = QStandardItemModel(0, 9)
+        single_model.setHeaderData(0, Qt.Horizontal, "Start")
+        single_model.setHeaderData(1, Qt.Horizontal, "Name")
+        single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
+        single_model.setHeaderData(3, Qt.Horizontal, "Format")
+        single_model.setHeaderData(4, Qt.Horizontal, "Width")
+        single_model.setHeaderData(5, Qt.Horizontal, "Height")
+        single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
+        single_model.setHeaderData(8, Qt.Horizontal, "Comp")
+
+        for blast_type in self.blast_types:
+            for addr, comp in self.rom.comps[blast_type].items():
+                single_model.insertRow(0)
+                single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
+                single_model.setData(single_model.index(0, 1), comp.name)
+                single_model.setData(single_model.index(0, 2), blast_type.name)
+                single_model.setData(single_model.index(0, 3), blast_get_format_id(blast_type))
+                single_model.setData(single_model.index(0, 4), comp.width(self.rom.images[blast_type]))
+                single_model.setData(single_model.index(0, 5), comp.height(self.rom.images[blast_type]))
+                single_model.setData(single_model.index(0, 6), comp.encoded_size(self.rom.images[blast_type]))
+                single_model.setData(single_model.index(0, 7), comp.decoded_size(self.rom.images[blast_type]))
+                single_model.setData(single_model.index(0, 8), comp.type.name)
+
+        return single_model
+
     def init_models(self):
         for lut_size in self.current_lut.keys():
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
@@ -90,6 +118,11 @@ class App(QWidget):
         self.single_proxy_model.setDynamicSortFilter(True)
         self.single_proxy_model.setSourceModel(single_model)
         self.single_proxy_model.setFilterKeyColumn(2)
+
+        composite_model = self.make_composite_model()
+        self.composite_proxy_model.setDynamicSortFilter(True)
+        self.composite_proxy_model.setSourceModel(composite_model)
+        self.composite_proxy_model.setFilterKeyColumn(2)
 
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -116,10 +149,11 @@ class App(QWidget):
         self.single_view.selectionModel().currentChanged.connect(self.on_single_select)
         self.single_view.setSortingEnabled(True)
 
-        self.composite_list_view.setObjectName("compositeView")
-        self.composite_list_view.setModel(self.composite_models[Blast.BLAST1_RGBA16])
-        self.composite_list_view.selectionModel().currentChanged.connect(self.on_composite_select)
-        self.composite_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.composite_view.setRootIsDecorated(False)
+        self.composite_view.setAlternatingRowColors(True)
+        self.composite_view.setModel(self.composite_proxy_model)
+        self.composite_view.selectionModel().currentChanged.connect(self.on_composite_select)
+        self.composite_view.setSortingEnabled(True)
 
         blast_list_layout = QVBoxLayout()
         blast_list_layout.addWidget(blast_filter_box)
@@ -127,7 +161,7 @@ class App(QWidget):
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         tab_widget.addTab(self.single_view, "Single")
-        tab_widget.addTab(self.composite_list_view, "Multi")
+        tab_widget.addTab(self.composite_view, "Multi")
         blast_list_layout.addWidget(tab_widget)
 
         self.lut_view.setObjectName("lutView")
@@ -166,14 +200,17 @@ class App(QWidget):
         self.update_image_label()
 
     def on_composite_select(self, model_index):
-        address = int(model_index.data(), 16)
+        addr_i = self.composite_proxy_model.index(model_index.row(), 0)
+        address = int(self.composite_proxy_model.data(addr_i), 16)
 
-        composite: Composite = self.rom.comps[self.blast_filter][address]
+        blast_i = self.composite_proxy_model.index(model_index.row(), 2)
+        blast_type = getattr(Blast, self.composite_proxy_model.data(blast_i))
+
+        composite: Composite = self.rom.comps[blast_type][address]
 
         images = []
-
         for addr in composite.addresses:
-            i = self.rom.images[self.blast_filter][addr]
+            i = self.rom.images[blast_type][addr]
             i.decode()
             images.append(i)
 
@@ -211,7 +248,7 @@ class App(QWidget):
 
         painter.end()
 
-        self.image = BlastImage(self.blast_filter, address, None, width, height)
+        self.image = BlastImage(blast_type, address, None, width, height)
         self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
@@ -220,7 +257,7 @@ class App(QWidget):
 
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.blast_filter)
+                lut_size = blast_get_lut_size(self.image.blast)
                 self.current_lut[lut_size] = lut_addr
                 lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
