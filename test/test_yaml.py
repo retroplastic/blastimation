@@ -3,7 +3,7 @@ import unittest
 import ryaml
 
 from blastimation.blast import Blast
-from blastimation.rom import Comp
+from blastimation.rom import Comp, Rom
 
 
 def composites_to_yaml(composites) -> list[str]:
@@ -73,3 +73,40 @@ class Test(unittest.TestCase):
         pprint.pprint(reloaded)
 
         # blast_type = getattr(Blast, "BLAST1_RGBA16")
+
+    def test_old_to_new(self):
+        rom = Rom("blastcorps.us.v11.assets.yaml")
+
+        all_by_addr = {}
+
+        for blast_type, comp_dict in rom.composites.items():
+            for first_addr, comp_list in comp_dict.items():
+                addresses = [first_addr] + comp_list[1:]
+                comp_type = comp_list[0]
+                addresses.sort()
+                name = "Comp %06X" % addresses[0]
+
+                all_by_addr[addresses[0]] = blast_type, comp_type, name, addresses
+
+        new = {}
+
+        sorted_addrs = list(all_by_addr.keys())
+        sorted_addrs.sort()
+        for addr in sorted_addrs:
+            blast_type, comp_type, name, addresses = all_by_addr[addr]
+
+            if blast_type not in new:
+                new[blast_type] = {}
+            if comp_type not in new[blast_type]:
+                new[blast_type][comp_type] = []
+
+            new[blast_type][comp_type].append(addresses + [name])
+
+        lines = composites_to_yaml(new)
+        with open("new.yaml", "w") as f:
+            f.writelines(lines)
+
+        with open("new.yaml", "r") as f:
+            reloaded = ryaml.load(f)
+
+        pprint.pprint(reloaded)
