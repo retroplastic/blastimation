@@ -84,23 +84,22 @@ class Test(unittest.TestCase):
                 addresses = [first_addr] + comp_list[1:]
                 comp_type = comp_list[0]
                 addresses.sort()
-                name = "Comp %06X" % addresses[0]
 
-                all_by_addr[addresses[0]] = blast_type, comp_type, name, addresses
+                all_by_addr[addresses[0]] = blast_type, comp_type, addresses
 
         new = {}
 
         sorted_addrs = list(all_by_addr.keys())
         sorted_addrs.sort()
         for addr in sorted_addrs:
-            blast_type, comp_type, name, addresses = all_by_addr[addr]
+            blast_type, comp_type, addresses = all_by_addr[addr]
 
             if blast_type not in new:
                 new[blast_type] = {}
             if comp_type not in new[blast_type]:
                 new[blast_type][comp_type] = []
 
-            new[blast_type][comp_type].append(addresses + [name])
+            new[blast_type][comp_type].append(addresses)
 
         lines = composites_to_yaml(new)
         with open("new.yaml", "w") as f:
