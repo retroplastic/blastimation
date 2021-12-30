@@ -1,3 +1,4 @@
+import pprint
 import struct
 from enum import Enum
 
@@ -119,6 +120,7 @@ class Rom:
                 self.images[blast_type][address] = BlastImage(blast_type, address, encoded_bytes)
 
     def init_composite_images(self):
+        """
         self.composites.update({
             Blast.BLAST1_RGBA16: {
                 # Vehicles
@@ -177,6 +179,23 @@ class Rom:
                 0x32EEF0: [Comp.TopBottom, 0x32F4F8]  # Lighthouse
             }
         })
+        """
+        with open("composites.yaml", "r") as f:
+            composites_yaml = ryaml.load(f)
+
+        pprint.pprint(composites_yaml)
+
+        for blast_type_str, comp_types_dict in composites_yaml.items():
+            blast_type = getattr(Blast, blast_type_str)
+            for comp_type_str, comp_list in comp_types_dict.items():
+                comp_type = getattr(Comp, comp_type_str)
+                for comp in comp_list:
+                    if isinstance(comp[-1], str):
+                        name = comp[-1]
+                        addresses = comp[:-1]
+                    else:
+                        addresses = comp
+                    self.composites[blast_type][addresses[0]] = [comp_type] + addresses[1:]
 
     def print_stats(self):
         print("LUTs:")
