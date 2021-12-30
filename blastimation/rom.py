@@ -1,7 +1,4 @@
-import pprint
 import struct
-from enum import Enum
-
 import ryaml
 
 from blastimation.blast import Blast
@@ -177,8 +174,6 @@ class Rom:
         """
         with open("composites.yaml", "r") as f:
             composites_yaml = ryaml.load(f)
-
-        pprint.pprint(composites_yaml)
 
         for blast_type_str, comp_types_dict in composites_yaml.items():
             blast_type = getattr(Blast, blast_type_str)
