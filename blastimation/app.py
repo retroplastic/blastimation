@@ -88,7 +88,7 @@ class App(QWidget):
         self.blast_list_view.setObjectName("blastView")
         self.blast_list_view.setModel(self.blast_list_models[Blast.BLAST1_RGBA16])
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
-        self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.composite_list_view.setObjectName("compositeView")
         self.composite_list_view.setModel(self.composite_models[Blast.BLAST1_RGBA16])
@@ -141,12 +141,17 @@ class App(QWidget):
         composite = self.rom.composites[self.blast_filter][address]
 
         comp_type = composite[0]
-        other_address = composite[1]
 
         images = [
             self.rom.images[self.blast_filter][address],
-            self.rom.images[self.blast_filter][other_address]
+            self.rom.images[self.blast_filter][composite[1]]
         ]
+
+        if comp_type == Comp.Quad:
+            images.extend([
+                self.rom.images[self.blast_filter][composite[2]],
+                self.rom.images[self.blast_filter][composite[3]]
+            ])
 
         for i in images:
             i.decode()
@@ -155,9 +160,15 @@ class App(QWidget):
             case Comp.TB:
                 width = images[0].width
                 height = images[0].height * 2
-            case _:
+            case Comp.RL:
                 width = images[0].width * 2
                 height = images[0].height
+            case Comp.Quad:
+                width = images[0].width * 2
+                height = images[0].height * 2
+            case _:
+                width = 0
+                height = 0
 
         composite_image = QImage(width, height, QImage.Format_ARGB32)
         composite_image.fill(QColor(0, 0, 0, 0))
@@ -168,9 +179,14 @@ class App(QWidget):
             case Comp.TB:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(0, height/2), images[0].qimage)
-            case _:
+            case Comp.RL:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(width / 2, 0), images[0].qimage)
+            case Comp.Quad:
+                painter.drawImage(QPoint(0, 0), images[2].qimage)
+                painter.drawImage(QPoint(width / 2, 0), images[3].qimage)
+                painter.drawImage(QPoint(0, height / 2), images[0].qimage)
+                painter.drawImage(QPoint(width / 2, height / 2), images[1].qimage)
 
         painter.end()
 
