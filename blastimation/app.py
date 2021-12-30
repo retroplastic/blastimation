@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtCore import QRect, Qt, QPoint, QModelIndex
+from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView
@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
-from blastimation.blast import Blast, blast_get_lut_size, blast_get_format, blast_get_format_id
+from blastimation.blast import Blast, blast_get_lut_size, blast_get_format_id
 
 
 class App(QWidget):
@@ -32,16 +32,6 @@ class App(QWidget):
         ]
         self.blast_filter: Blast = Blast.BLAST1_RGBA16
 
-        self.single_model = QStandardItemModel(0, 8)
-        self.single_model.setHeaderData(0, Qt.Horizontal, "Start")
-        self.single_model.setHeaderData(1, Qt.Horizontal, "Name")
-        self.single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
-        self.single_model.setHeaderData(3, Qt.Horizontal, "Format")
-        self.single_model.setHeaderData(4, Qt.Horizontal, "Width")
-        self.single_model.setHeaderData(5, Qt.Horizontal, "Height")
-        self.single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
-        self.single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
-
         self.blast_list_models = {}
         self.lut_models = {}
         self.composite_models = {}
@@ -56,23 +46,38 @@ class App(QWidget):
         self.composite_list_view = QListView()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
+        self.single_view = QTreeView()
+        self.single_proxy_model = QSortFilterProxyModel()
 
         self.init_models()
         self.init_widgets()
 
-    def init_models(self):
+    def make_single_model(self):
+        single_model = QStandardItemModel(0, 8)
+        single_model.setHeaderData(0, Qt.Horizontal, "Start")
+        single_model.setHeaderData(1, Qt.Horizontal, "Name")
+        single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
+        single_model.setHeaderData(3, Qt.Horizontal, "Format")
+        single_model.setHeaderData(4, Qt.Horizontal, "Width")
+        single_model.setHeaderData(5, Qt.Horizontal, "Height")
+        single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
+
         for blast_type in self.blast_types:
             for addr, image in self.rom.images[blast_type].items():
-                self.single_model.insertRow(0)
-                self.single_model.setData(self.single_model.index(0, 0), "0x%06X" % addr)
-                self.single_model.setData(self.single_model.index(0, 1), "?")
-                self.single_model.setData(self.single_model.index(0, 2), blast_type.name)
-                self.single_model.setData(self.single_model.index(0, 3), blast_get_format_id(blast_type))
-                self.single_model.setData(self.single_model.index(0, 4), image.width)
-                self.single_model.setData(self.single_model.index(0, 5), image.height)
-                self.single_model.setData(self.single_model.index(0, 6), image.encoded_size)
-                self.single_model.setData(self.single_model.index(0, 7), image.decoded_size)
+                single_model.insertRow(0)
+                single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
+                single_model.setData(single_model.index(0, 1), "?")
+                single_model.setData(single_model.index(0, 2), blast_type.name)
+                single_model.setData(single_model.index(0, 3), blast_get_format_id(blast_type))
+                single_model.setData(single_model.index(0, 4), image.width)
+                single_model.setData(single_model.index(0, 5), image.height)
+                single_model.setData(single_model.index(0, 6), image.encoded_size)
+                single_model.setData(single_model.index(0, 7), image.decoded_size)
 
+        return single_model
+
+    def init_models(self):
         for t in self.blast_types:
             self.blast_list_models[t] = QStandardItemModel(0, 1)
             for k in self.rom.images[t].keys():
@@ -89,6 +94,11 @@ class App(QWidget):
                 self.composite_models[t].appendRow(QStandardItem("%06X" % k))
 
     def init_widgets(self):
+        single_model = self.make_single_model()
+        self.single_proxy_model.setDynamicSortFilter(True)
+        self.single_proxy_model.setSourceModel(single_model)
+        self.single_proxy_model.setFilterKeyColumn(2)
+
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
         screen_geometry: QRect = self.screen().geometry()
@@ -113,10 +123,9 @@ class App(QWidget):
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
         # self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.single_view = QTreeView()
         self.single_view.setRootIsDecorated(False)
         self.single_view.setAlternatingRowColors(True)
-        self.single_view.setModel(self.single_model)
+        self.single_view.setModel(self.single_proxy_model)
         self.single_view.selectionModel().currentChanged.connect(self.on_single_select)
         self.single_view.setSortingEnabled(True)
 
@@ -152,11 +161,11 @@ class App(QWidget):
         main_layout.addLayout(lists_layout)
 
     def on_single_select(self, model_index):
-        addr_i = self.single_model.index(model_index.row(), 0)
-        addr = int(self.single_model.data(addr_i), 16)
+        addr_i = self.single_proxy_model.index(model_index.row(), 0)
+        addr = int(self.single_proxy_model.data(addr_i), 16)
 
-        blast_i = self.single_model.index(model_index.row(), 2)
-        blast_type = getattr(Blast, self.single_model.data(blast_i))
+        blast_i = self.single_proxy_model.index(model_index.row(), 2)
+        blast_type = getattr(Blast, self.single_proxy_model.data(blast_i))
 
         self.image = self.rom.images[blast_type][addr]
         match blast_type:
@@ -251,6 +260,8 @@ class App(QWidget):
 
         index = self.blast_list_models[self.blast_filter].index(0, 0)
         self.blast_list_view.setCurrentIndex(index)
+
+        self.single_proxy_model.setFilterFixedString(self.blast_filter.name)
 
         match self.blast_filter:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
