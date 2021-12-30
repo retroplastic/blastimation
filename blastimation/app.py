@@ -5,6 +5,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, Q
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget
 
+from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size
@@ -62,7 +63,7 @@ class App(QWidget):
 
         for t in self.blast_types:
             self.composite_models[t] = QStandardItemModel(0, 1)
-            for k in self.rom.composites[t].keys():
+            for k in self.rom.comps[t].keys():
                 self.composite_models[t].appendRow(QStandardItem("%06X" % k))
 
     def init_widgets(self):
@@ -138,25 +139,16 @@ class App(QWidget):
     def on_composite_select(self, model_index):
         address = int(model_index.data(), 16)
 
-        composite = self.rom.composites[self.blast_filter][address]
+        composite: Composite = self.rom.comps[self.blast_filter][address]
 
-        comp_type = composite[0]
+        images = []
 
-        images = [
-            self.rom.images[self.blast_filter][address],
-            self.rom.images[self.blast_filter][composite[1]]
-        ]
-
-        if comp_type == CompType.Quad:
-            images.extend([
-                self.rom.images[self.blast_filter][composite[2]],
-                self.rom.images[self.blast_filter][composite[3]]
-            ])
-
-        for i in images:
+        for addr in composite.addresses:
+            i = self.rom.images[self.blast_filter][addr]
             i.decode()
+            images.append(i)
 
-        match comp_type:
+        match composite.type:
             case CompType.TopBottom:
                 width = images[0].width
                 height = images[0].height * 2
@@ -175,7 +167,7 @@ class App(QWidget):
 
         painter = QPainter(composite_image)
 
-        match comp_type:
+        match composite.type:
             case CompType.TopBottom:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(0, height/2), images[0].qimage)

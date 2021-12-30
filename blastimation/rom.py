@@ -5,16 +5,11 @@ from enum import Enum
 import ryaml
 
 from blastimation.blast import Blast
+from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
 
 ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
-
-
-class CompType(Enum):
-    TopBottom = 0  # Top Bottom (Actually Bottom Top, as we flip)
-    RightLeft = 1  # Right Left
-    Quad = 2
 
 
 class Rom:
@@ -33,7 +28,7 @@ class Rom:
             Blast.BLAST6_IA8: {}
         }
 
-        self.composites = {
+        self.comps = {
             Blast.BLAST1_RGBA16: {},
             Blast.BLAST2_RGBA32: {},
             Blast.BLAST3_IA8: {},
@@ -195,7 +190,16 @@ class Rom:
                         addresses = comp[:-1]
                     else:
                         addresses = comp
-                    self.composites[blast_type][addresses[0]] = [comp_type] + addresses[1:]
+                        name = ""
+
+                    c = Composite()
+                    c.name = name
+                    c.start = addresses[0]
+                    c.addresses = addresses
+                    c.blast = blast_type
+                    c.type = comp_type
+
+                    self.comps[c.blast][c.start] = c
 
     def print_stats(self):
         print("LUTs:")
