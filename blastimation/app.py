@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtCore import QRect, Qt, QPoint
+from PySide6.QtCore import QRect, Qt, QPoint, QModelIndex
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView
@@ -117,6 +117,8 @@ class App(QWidget):
         self.single_view.setRootIsDecorated(False)
         self.single_view.setAlternatingRowColors(True)
         self.single_view.setModel(self.single_model)
+        self.single_view.selectionModel().currentChanged.connect(self.on_single_select)
+        self.single_view.setSortingEnabled(True)
 
         self.composite_list_view.setObjectName("compositeView")
         self.composite_list_view.setModel(self.composite_models[Blast.BLAST1_RGBA16])
@@ -148,6 +150,21 @@ class App(QWidget):
         lists_layout.addWidget(self.lut_widget)
 
         main_layout.addLayout(lists_layout)
+
+    def on_single_select(self, model_index):
+        i = self.single_model.index(model_index.row(), 0)
+        addr = int(self.single_model.data(i), 16)
+        self.image = self.rom.images[self.blast_filter][addr]
+
+        match self.blast_filter:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast_filter)
+                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                self.image.decode_lut(lut)
+            case _:
+                self.image.decode()
+
+        self.update_image_label()
 
     def on_list_select(self, model_index):
         address = int(model_index.data(), 16)
