@@ -1,7 +1,7 @@
 import struct
 from enum import Enum
 
-import yaml
+import ryaml
 
 from blastimation.blast import Blast
 from blastimation.image import BlastImage
@@ -50,7 +50,7 @@ class Rom:
 
     def load_yaml(self, yaml_path: str):
         with open(yaml_path, "r") as f:
-            y = yaml.safe_load(f)
+            y = ryaml.load(f)
 
         rom_path = y['options']['target_path']
         with open(rom_path, "rb") as f:

@@ -1,2 +1,2 @@
 PySide6==6.2.2.1
-PyYAML==6.0
+ryaml==0.4.0
