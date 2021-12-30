@@ -16,8 +16,8 @@ class App(QWidget):
         self.resize(960, 1080)
 
         self.current_lut = {
-            128: int("047480", 16),
-            256: int("152970", 16)
+            128: 0x047480,
+            256: 0x152970
         }
 
         self.blast_types = [
@@ -90,7 +90,11 @@ class App(QWidget):
 
         blast_list_layout = QVBoxLayout()
         blast_list_layout.addWidget(blast_filter_box)
-        blast_list_layout.addWidget(self.blast_list_view)
+
+        tab_widget = QTabWidget()
+        tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        tab_widget.addTab(self.blast_list_view, "Single")
+        blast_list_layout.addWidget(tab_widget)
 
         self.lut_view.setObjectName("lutView")
         self.lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -103,16 +107,11 @@ class App(QWidget):
         lut_layout.addWidget(self.lut_view)
         lut_layout.addWidget(lut_auto_button)
 
-        single_tab_layout_widget = QWidget()
-        lists_layout = QHBoxLayout(single_tab_layout_widget)
+        lists_layout = QHBoxLayout()
         lists_layout.addLayout(blast_list_layout)
         lists_layout.addWidget(self.lut_widget)
 
-        tab_widget = QTabWidget()
-        tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        tab_widget.addTab(single_tab_layout_widget, "Single")
-
-        main_layout.addWidget(tab_widget)
+        main_layout.addLayout(lists_layout)
 
     def on_list_select(self, model_index):
         address = int(model_index.data(), 16)
