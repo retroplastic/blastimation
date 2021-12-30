@@ -3,12 +3,12 @@ import sys
 from PySide6.QtCore import QRect, Qt, QPoint
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
-    QListView, QAbstractItemView, QComboBox, QTabWidget
+    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView
 
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
-from blastimation.blast import Blast, blast_get_lut_size, blast_get_format
+from blastimation.blast import Blast, blast_get_lut_size, blast_get_format, blast_get_format_id
 
 
 class App(QWidget):
@@ -67,7 +67,7 @@ class App(QWidget):
                 self.single_model.setData(self.single_model.index(0, 0), "0x%06X" % addr)
                 self.single_model.setData(self.single_model.index(0, 1), "?")
                 self.single_model.setData(self.single_model.index(0, 2), blast_type.name)
-                self.single_model.setData(self.single_model.index(0, 3), blast_get_format(blast_type))
+                self.single_model.setData(self.single_model.index(0, 3), blast_get_format_id(blast_type))
                 self.single_model.setData(self.single_model.index(0, 4), image.width)
                 self.single_model.setData(self.single_model.index(0, 5), image.height)
                 self.single_model.setData(self.single_model.index(0, 6), image.encoded_size)
@@ -113,6 +113,11 @@ class App(QWidget):
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
         # self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
+        self.single_view = QTreeView()
+        self.single_view.setRootIsDecorated(False)
+        self.single_view.setAlternatingRowColors(True)
+        self.single_view.setModel(self.single_model)
+
         self.composite_list_view.setObjectName("compositeView")
         self.composite_list_view.setModel(self.composite_models[Blast.BLAST1_RGBA16])
         self.composite_list_view.selectionModel().currentChanged.connect(self.on_composite_select)
@@ -123,7 +128,7 @@ class App(QWidget):
 
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        tab_widget.addTab(self.blast_list_view, "Single")
+        tab_widget.addTab(self.single_view, "Single")
         tab_widget.addTab(self.composite_list_view, "Multi")
         blast_list_layout.addWidget(tab_widget)
 

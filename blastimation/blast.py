@@ -64,6 +64,10 @@ def blast_get_format(blast_type: Blast) -> str:
             return ""
 
 
+def blast_get_format_id(blast_type: Blast) -> str:
+    return "%s%d" % (blast_get_format(blast_type), blast_get_depth(blast_type))
+
+
 def blast_get_decoded_extension(blast_type: Blast) -> str:
     match blast_type:
         case Blast.BLAST0:
