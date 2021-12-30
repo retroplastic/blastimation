@@ -1,4 +1,6 @@
 import struct
+from enum import Enum
+
 import yaml
 
 from blastimation.blast import Blast
@@ -6,6 +8,11 @@ from blastimation.image import BlastImage
 
 ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
+
+
+class CompType(Enum):
+    TB = 0  # Top Bottom (Actually Bottom Top, as we flip)
+    RL = 1  # Right Left
 
 
 class Rom:
@@ -16,6 +23,15 @@ class Rom:
         }
 
         self.images = {
+            Blast.BLAST1_RGBA16: {},
+            Blast.BLAST2_RGBA32: {},
+            Blast.BLAST3_IA8: {},
+            Blast.BLAST4_IA16: {},
+            Blast.BLAST5_RGBA32: {},
+            Blast.BLAST6_IA8: {}
+        }
+
+        self.composites = {
             Blast.BLAST1_RGBA16: {},
             Blast.BLAST2_RGBA32: {},
             Blast.BLAST3_IA8: {},
@@ -98,6 +114,29 @@ class Rom:
                     continue
 
                 self.images[blast_type][address] = BlastImage(blast_type, address, encoded_bytes)
+
+    def init_composite_images(self):
+        # Vehicles
+        self.composites[Blast.BLAST1_RGBA16]["1D8420"] = [CompType.TB, "1D8970"]
+        self.composites[Blast.BLAST1_RGBA16]["1DA338"] = [CompType.TB, "1DA898"]
+        self.composites[Blast.BLAST1_RGBA16]["1DAE40"] = [CompType.TB, "1F0498"]
+        self.composites[Blast.BLAST1_RGBA16]["0D0288"] = [CompType.RL, "0D4410"]
+        self.composites[Blast.BLAST1_RGBA16]["0F25B8"] = [CompType.RL, "0F27A8"]
+        self.composites[Blast.BLAST1_RGBA16]["1FB810"] = [CompType.RL, "1FBEC8"]
+        self.composites[Blast.BLAST1_RGBA16]["278520"] = [CompType.RL, "278890"]
+
+        self.composites[Blast.BLAST1_RGBA16]["2AC268"] = [CompType.TB, "2AC748"]
+        self.composites[Blast.BLAST1_RGBA16]["2ACB18"] = [CompType.TB, "2ACF88"]
+        self.composites[Blast.BLAST1_RGBA16]["2AD6F8"] = [CompType.TB, "2AD370"]
+
+        # $ animation
+        self.composites[Blast.BLAST1_RGBA16]["2ADAA0"] = [CompType.TB, "2ADCF8"]
+        self.composites[Blast.BLAST1_RGBA16]["2ADFB0"] = [CompType.TB, "2AE208"]
+        self.composites[Blast.BLAST1_RGBA16]["2AE4A8"] = [CompType.TB, "2AE828"]
+        self.composites[Blast.BLAST1_RGBA16]["2AEC00"] = [CompType.TB, "2AEF40"]
+        self.composites[Blast.BLAST1_RGBA16]["2AF290"] = [CompType.TB, "2AF520"]
+
+        self.composites[Blast.BLAST1_RGBA16]["08A840"] = [CompType.TB, "089EE8"]
 
     def print_stats(self):
         print("LUTs:")
