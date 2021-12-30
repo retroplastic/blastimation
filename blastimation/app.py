@@ -152,13 +152,16 @@ class App(QWidget):
         main_layout.addLayout(lists_layout)
 
     def on_single_select(self, model_index):
-        i = self.single_model.index(model_index.row(), 0)
-        addr = int(self.single_model.data(i), 16)
-        self.image = self.rom.images[self.blast_filter][addr]
+        addr_i = self.single_model.index(model_index.row(), 0)
+        addr = int(self.single_model.data(addr_i), 16)
 
-        match self.blast_filter:
+        blast_i = self.single_model.index(model_index.row(), 2)
+        blast_type = getattr(Blast, self.single_model.data(blast_i))
+
+        self.image = self.rom.images[blast_type][addr]
+        match blast_type:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.blast_filter)
+                lut_size = blast_get_lut_size(blast_type)
                 lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
             case _:
