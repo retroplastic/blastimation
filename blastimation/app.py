@@ -157,10 +157,10 @@ class App(QWidget):
             i.decode()
 
         match comp_type:
-            case Comp.TB:
+            case Comp.TopBottom:
                 width = images[0].width
                 height = images[0].height * 2
-            case Comp.RL:
+            case Comp.RightLeft:
                 width = images[0].width * 2
                 height = images[0].height
             case Comp.Quad:
@@ -176,10 +176,10 @@ class App(QWidget):
         painter = QPainter(composite_image)
 
         match comp_type:
-            case Comp.TB:
+            case Comp.TopBottom:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(0, height/2), images[0].qimage)
-            case Comp.RL:
+            case Comp.RightLeft:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(width / 2, 0), images[0].qimage)
             case Comp.Quad:
