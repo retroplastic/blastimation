@@ -13,6 +13,7 @@ END_OFFSET = 0xCCE0
 class Comp(Enum):
     TB = 0  # Top Bottom (Actually Bottom Top, as we flip)
     RL = 1  # Right Left
+    Quad = 2
 
 
 class Rom:
@@ -121,13 +122,33 @@ class Rom:
         self.composites.update({
             Blast.BLAST1_RGBA16: {
                 # Vehicles
-                0x1D8420: [Comp.TB, 0x1D8970],
+                0x1D8420: [Comp.TB, 0x1D8970],  # Ramdozer
                 0x1DA338: [Comp.TB, 0x1DA898],
-                0x1DAE40: [Comp.TB, 0x1F0498],
+                0x1DAE40: [Comp.TB, 0x1F0498],  # Backlash
                 0x0D0288: [Comp.RL, 0x0D4410],
                 0x0F25B8: [Comp.RL, 0x0F27A8],
                 0x1FB810: [Comp.RL, 0x1FBEC8],
+                0x112928: [Comp.RL, 0x112060],
                 0x278520: [Comp.TB, 0x278890],
+
+                0x15F370: [Comp.TB, 0x15F4C0],
+                0x15F8C0: [Comp.TB, 0x15FDC0],
+
+                0x275528: [Comp.TB, 0x275AA8],  # Blast truck
+                0x273858: [Comp.TB, 0x273C38],  # Black truck
+                0x2741A0: [Comp.TB, 0x274350],  # Bike
+                0x276FE0: [Comp.TB, 0x277308],  # Jet pack bot
+                0x277798: [Comp.TB, 0x278000],  # Thunderfist
+                0x2746B8: [Comp.TB, 0x274B20],  # Buggy bot
+                0x2760C0: [Comp.TB, 0x2764A8],  # American car
+                0x274E70: [Comp.TB, 0x2751C8],  # Police car
+
+                # stones
+                0x2BC5E8: [Comp.TB, 0x2BEE28],
+                # 0x2BCFE0: [Comp.TB, 0x2BE2B8],
+                0x2BCFE0: [Comp.TB, 0x2BD7E0],
+
+                0x08D4C8: [Comp.TB, 0x08DA10],
 
                 0x2AC268: [Comp.TB, 0x2AC748],
                 0x2ACB18: [Comp.TB, 0x2ACF88],
@@ -140,7 +161,20 @@ class Rom:
                 0x2AEC00: [Comp.TB, 0x2AEF40],
                 0x2AF290: [Comp.TB, 0x2AF520],
 
-                0x089EE8: [Comp.TB, 0x08A840]
+                0x089EE8: [Comp.TB, 0x08A840],
+
+                0x2CE088: [Comp.RL, 0x2CE7B0],
+                0x13A210: [Comp.RL, 0x13AAB8],
+
+                0x15A2A0: [Comp.TB, 0x15A728],
+
+                0x32E570: [Comp.TB, 0x32E718],  # Question mark
+
+                # Quad?
+                0x20F120: [Comp.RL, 0x20E758],
+                0x20DB40: [Comp.RL, 0x20CFF8],
+
+                0x180890: [Comp.RL, 0x182330],
             }
         })
 
