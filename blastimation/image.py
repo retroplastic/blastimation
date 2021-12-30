@@ -13,6 +13,7 @@ class BlastImage:
         self.blast: Blast = blast_type
         self.encoded: bytes = encoded
         self.pixmap: QPixmap = None
+        self.qimage: QImage = None
 
     def decode(self):
         if self.pixmap:
@@ -52,10 +53,10 @@ class BlastImage:
                 bytes_per_pixel = 4
                 image_format = QImage.Format_RGBA8888
 
-        image = QImage(raw, self.width, self.height, bytes_per_pixel * self.width, image_format)
+        self.qimage = QImage(raw, self.width, self.height, bytes_per_pixel * self.width, image_format)
 
         # Fix grayscale alpha
         if image_format == QImage.Format_Grayscale16:
-            image.setAlphaChannel(image)
+            self.qimage.setAlphaChannel(self.qimage)
 
-        self.pixmap = QPixmap.fromImage(image)
+        self.pixmap = QPixmap.fromImage(self.qimage)

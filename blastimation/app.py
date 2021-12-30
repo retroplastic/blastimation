@@ -1,11 +1,12 @@
 import sys
 
-from PySide6.QtCore import QRect, Qt
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtCore import QRect, Qt, QPoint
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget
 
-from blastimation.rom import Rom
+from blastimation.image import BlastImage
+from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size
 
 
@@ -41,6 +42,7 @@ class App(QWidget):
         # Global widgets
         self.image_label = QLabel()
         self.blast_list_view = QListView()
+        self.composite_list_view = QListView()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
 
@@ -83,10 +85,15 @@ class App(QWidget):
         blast_filter_box.setCurrentIndex(0)
         blast_filter_box.currentIndexChanged.connect(self.on_blast_filter_changed)
 
-        self.blast_list_view.setObjectName("listView")
+        self.blast_list_view.setObjectName("blastView")
         self.blast_list_view.setModel(self.blast_list_models[Blast.BLAST1_RGBA16])
         self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
         self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.composite_list_view.setObjectName("compositeView")
+        self.composite_list_view.setModel(self.composite_models[Blast.BLAST1_RGBA16])
+        self.composite_list_view.selectionModel().currentChanged.connect(self.on_composite_select)
+        self.composite_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         blast_list_layout = QVBoxLayout()
         blast_list_layout.addWidget(blast_filter_box)
@@ -94,6 +101,7 @@ class App(QWidget):
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         tab_widget.addTab(self.blast_list_view, "Single")
+        tab_widget.addTab(self.composite_list_view, "Multi")
         blast_list_layout.addWidget(tab_widget)
 
         self.lut_view.setObjectName("lutView")
@@ -125,6 +133,49 @@ class App(QWidget):
             case _:
                 self.image.decode()
 
+        self.update_image_label()
+
+    def on_composite_select(self, model_index):
+        address = int(model_index.data(), 16)
+
+        composite = self.rom.composites[self.blast_filter][address]
+
+        comp_type = composite[0]
+        other_address = composite[1]
+
+        images = [
+            self.rom.images[self.blast_filter][address],
+            self.rom.images[self.blast_filter][other_address]
+        ]
+
+        for i in images:
+            i.decode()
+
+        match comp_type:
+            case CompType.TB:
+                width = images[0].width
+                height = images[0].height * 2
+            case _:
+                width = images[0].width * 2
+                height = images[0].height
+
+        composite_image = QImage(width, height, QImage.Format_ARGB32)
+        composite_image.fill(QColor(0, 0, 0, 0))
+
+        painter = QPainter(composite_image)
+
+        match comp_type:
+            case CompType.TB:
+                painter.drawImage(QPoint(0, 0), images[1].qimage)
+                painter.drawImage(QPoint(0, height/2), images[0].qimage)
+            case _:
+                painter.drawImage(QPoint(0, 0), images[1].qimage)
+                painter.drawImage(QPoint(width / 2, 0), images[0].qimage)
+
+        painter.end()
+
+        self.image = BlastImage(self.blast_filter, address, None, width, height)
+        self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
     def on_lut_select(self, model_index):
