@@ -267,6 +267,7 @@ class App(QWidget):
         blast_type = self.blast_types[index]
 
         self.single_proxy_model.setFilterFixedString(blast_type.name)
+        self.composite_proxy_model.setFilterFixedString(blast_type.name)
 
         match blast_type:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
