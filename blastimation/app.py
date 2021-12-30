@@ -30,9 +30,7 @@ class App(QWidget):
             Blast.BLAST5_RGBA32,
             Blast.BLAST6_IA8,
         ]
-        self.blast_filter: Blast = Blast.BLAST1_RGBA16
 
-        self.blast_list_models = {}
         self.lut_models = {}
         self.composite_models = {}
 
@@ -42,7 +40,6 @@ class App(QWidget):
 
         # Global widgets
         self.image_label = QLabel()
-        self.blast_list_view = QListView()
         self.composite_list_view = QListView()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
@@ -78,11 +75,6 @@ class App(QWidget):
         return single_model
 
     def init_models(self):
-        for t in self.blast_types:
-            self.blast_list_models[t] = QStandardItemModel(0, 1)
-            for k in self.rom.images[t].keys():
-                self.blast_list_models[t].appendRow(QStandardItem("%06X" % k))
-
         for lut_size in self.current_lut.keys():
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
             for k in self.rom.luts[lut_size].keys():
@@ -117,11 +109,6 @@ class App(QWidget):
         blast_filter_box.addItems(blast_type_names)
         blast_filter_box.setCurrentIndex(0)
         blast_filter_box.currentIndexChanged.connect(self.on_blast_filter_changed)
-
-        self.blast_list_view.setObjectName("blastView")
-        self.blast_list_view.setModel(self.blast_list_models[Blast.BLAST1_RGBA16])
-        self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
-        # self.blast_list_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.single_view.setRootIsDecorated(False)
         self.single_view.setAlternatingRowColors(True)
@@ -171,20 +158,6 @@ class App(QWidget):
         match blast_type:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(blast_type)
-                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
-                self.image.decode_lut(lut)
-            case _:
-                self.image.decode()
-
-        self.update_image_label()
-
-    def on_list_select(self, model_index):
-        address = int(model_index.data(), 16)
-        self.image = self.rom.images[self.blast_filter][address]
-
-        match self.blast_filter:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.blast_filter)
                 lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
             case _:
@@ -254,18 +227,13 @@ class App(QWidget):
                 self.update_image_label()
 
     def on_blast_filter_changed(self, index):
-        self.blast_filter = self.blast_types[index]
-        self.blast_list_view.setModel(self.blast_list_models[self.blast_filter])
-        self.blast_list_view.selectionModel().currentChanged.connect(self.on_list_select)
+        blast_type = self.blast_types[index]
 
-        index = self.blast_list_models[self.blast_filter].index(0, 0)
-        self.blast_list_view.setCurrentIndex(index)
+        self.single_proxy_model.setFilterFixedString(blast_type.name)
 
-        self.single_proxy_model.setFilterFixedString(self.blast_filter.name)
-
-        match self.blast_filter:
+        match blast_type:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.blast_filter)
+                lut_size = blast_get_lut_size(blast_type)
                 self.lut_view.setModel(self.lut_models[lut_size])
                 self.lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
                 self.lut_widget.show()
@@ -274,9 +242,9 @@ class App(QWidget):
                 self.lut_view.setModel(None)
 
     def on_auto_lut(self):
-        match self.blast_filter:
+        match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.blast_filter)
+                lut_size = blast_get_lut_size(self.image.blast)
 
                 last_k = 0
                 lut_keys = list(self.rom.luts[lut_size].keys())
