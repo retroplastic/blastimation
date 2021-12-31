@@ -90,6 +90,11 @@ class App(QWidget):
             for i in range(len(items)):
                 self.single_model.setData(self.single_model.index(0, i), items[i])
 
+            # Update icon
+            i = self.single_model.item(0)
+            icon = QIcon(image.pixmap)
+            i.setIcon(icon)
+
     @staticmethod
     def make_composite_model():
         m = QStandardItemModel(0, 9)
