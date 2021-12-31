@@ -34,7 +34,7 @@ class App(QWidget):
         self.lut_models = {}
 
         self.rom = Rom(sys.argv[1])
-        self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
+        self.image = list(self.rom.images.values())[0]
         self.image.decode()
 
         # Global widgets
@@ -61,28 +61,27 @@ class App(QWidget):
         single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
         single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
 
-        for blast_type in self.blast_types:
-            for addr, image in self.rom.images[blast_type].items():
-                single_model.insertRow(0)
-                single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
-                single_model.setData(single_model.index(0, 1), "?")
-                single_model.setData(single_model.index(0, 2), blast_type.name)
-                single_model.setData(single_model.index(0, 3), blast_get_format_id(blast_type))
-                single_model.setData(single_model.index(0, 4), image.width)
-                single_model.setData(single_model.index(0, 5), image.height)
-                single_model.setData(single_model.index(0, 6), image.encoded_size)
-                single_model.setData(single_model.index(0, 7), image.decoded_size)
+        for addr, image in self.rom.images.items():
+            single_model.insertRow(0)
+            single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
+            single_model.setData(single_model.index(0, 1), "?")
+            single_model.setData(single_model.index(0, 2), image.blast.name)
+            single_model.setData(single_model.index(0, 3), blast_get_format_id(image.blast))
+            single_model.setData(single_model.index(0, 4), image.width)
+            single_model.setData(single_model.index(0, 5), image.height)
+            single_model.setData(single_model.index(0, 6), image.encoded_size)
+            single_model.setData(single_model.index(0, 7), image.decoded_size)
 
-                match image.blast:
-                    case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                        lut_size = blast_get_lut_size(blast_type)
-                        lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
-                        image.decode_lut(lut)
-                    case _:
-                        image.decode()
-                i = single_model.item(0)
-                icon = QIcon(image.pixmap)
-                i.setIcon(icon)
+            match image.blast:
+                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                    lut_size = blast_get_lut_size(image.blast)
+                    lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                    image.decode_lut(lut)
+                case _:
+                    image.decode()
+            i = single_model.item(0)
+            icon = QIcon(image.pixmap)
+            i.setIcon(icon)
 
         return single_model
 
@@ -98,18 +97,17 @@ class App(QWidget):
         single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
         single_model.setHeaderData(8, Qt.Horizontal, "Comp")
 
-        for blast_type in self.blast_types:
-            for addr, comp in self.rom.comps[blast_type].items():
-                single_model.insertRow(0)
-                single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
-                single_model.setData(single_model.index(0, 1), comp.name)
-                single_model.setData(single_model.index(0, 2), blast_type.name)
-                single_model.setData(single_model.index(0, 3), blast_get_format_id(blast_type))
-                single_model.setData(single_model.index(0, 4), comp.width(self.rom.images[blast_type]))
-                single_model.setData(single_model.index(0, 5), comp.height(self.rom.images[blast_type]))
-                single_model.setData(single_model.index(0, 6), comp.encoded_size(self.rom.images[blast_type]))
-                single_model.setData(single_model.index(0, 7), comp.decoded_size(self.rom.images[blast_type]))
-                single_model.setData(single_model.index(0, 8), comp.type.name)
+        for addr, comp in self.rom.comps.items():
+            single_model.insertRow(0)
+            single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
+            single_model.setData(single_model.index(0, 1), comp.name)
+            single_model.setData(single_model.index(0, 2), comp.blast.name)
+            single_model.setData(single_model.index(0, 3), blast_get_format_id(comp.blast))
+            single_model.setData(single_model.index(0, 4), comp.width(self.rom.images))
+            single_model.setData(single_model.index(0, 5), comp.height(self.rom.images))
+            single_model.setData(single_model.index(0, 6), comp.encoded_size(self.rom.images))
+            single_model.setData(single_model.index(0, 7), comp.decoded_size(self.rom.images))
+            single_model.setData(single_model.index(0, 8), comp.type.name)
 
         return single_model
 
@@ -197,13 +195,10 @@ class App(QWidget):
         addr_i = self.single_proxy_model.index(model_index.row(), 0)
         addr = int(self.single_proxy_model.data(addr_i), 16)
 
-        blast_i = self.single_proxy_model.index(model_index.row(), 2)
-        blast_type = getattr(Blast, self.single_proxy_model.data(blast_i))
-
-        self.image = self.rom.images[blast_type][addr]
-        match blast_type:
+        self.image = self.rom.images[addr]
+        match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(blast_type)
+                lut_size = blast_get_lut_size(self.image.blast)
                 lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
             case _:
@@ -215,18 +210,15 @@ class App(QWidget):
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
         address = int(self.composite_proxy_model.data(addr_i), 16)
 
-        blast_i = self.composite_proxy_model.index(model_index.row(), 2)
-        blast_type = getattr(Blast, self.composite_proxy_model.data(blast_i))
-
-        composite: Composite = self.rom.comps[blast_type][address]
+        c: Composite = self.rom.comps[address]
 
         images = []
-        for addr in composite.addresses:
-            i = self.rom.images[blast_type][addr]
+        for addr in c.addresses:
+            i = self.rom.images[addr]
             i.decode()
             images.append(i)
 
-        match composite.type:
+        match c.type:
             case CompType.TopBottom:
                 width = images[0].width
                 height = images[0].height * 2
@@ -245,7 +237,7 @@ class App(QWidget):
 
         painter = QPainter(composite_image)
 
-        match composite.type:
+        match c.type:
             case CompType.TopBottom:
                 painter.drawImage(QPoint(0, 0), images[1].qimage)
                 painter.drawImage(QPoint(0, height/2), images[0].qimage)
@@ -260,7 +252,7 @@ class App(QWidget):
 
         painter.end()
 
-        self.image = BlastImage(blast_type, address, None, width, height)
+        self.image = BlastImage(c.blast, address, None, width, height)
         self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 

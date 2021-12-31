@@ -16,23 +16,8 @@ class Rom:
             256: {}
         }
 
-        self.images = {
-            Blast.BLAST1_RGBA16: {},
-            Blast.BLAST2_RGBA32: {},
-            Blast.BLAST3_IA8: {},
-            Blast.BLAST4_IA16: {},
-            Blast.BLAST5_RGBA32: {},
-            Blast.BLAST6_IA8: {}
-        }
-
-        self.comps = {
-            Blast.BLAST1_RGBA16: {},
-            Blast.BLAST2_RGBA32: {},
-            Blast.BLAST3_IA8: {},
-            Blast.BLAST4_IA16: {},
-            Blast.BLAST5_RGBA32: {},
-            Blast.BLAST6_IA8: {}
-        }
+        self.images: dict[int:BlastImage] = {}
+        self.comps: dict[int:Composite] = {}
 
         if path.endswith(".yaml"):
             self.load_yaml(path)
@@ -84,9 +69,7 @@ class Rom:
                 size = (s["end"] - s["start"])
                 self.luts[size][address] = data
             elif s["type"] == "blast":
-                blast_type: Blast = s["blast"]
-                self.images[blast_type][address] = BlastImage(blast_type, address, data,
-                                                              s["width"], s["height"])
+                self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
 
     def load_rom(self, rom_path: str):
         with open(rom_path, "rb") as f:
@@ -109,7 +92,7 @@ class Rom:
                         self.luts[size][address] = encoded_bytes
                     continue
 
-                self.images[blast_type][address] = BlastImage(blast_type, address, encoded_bytes)
+                self.images[address] = BlastImage(blast_type, address, encoded_bytes)
 
     def init_composite_images(self):
         with open("composites.yaml", "r") as f:
@@ -134,7 +117,7 @@ class Rom:
                     c.blast = blast_type
                     c.type = comp_type
 
-                    self.comps[c.blast][c.start] = c
+                    self.comps[c.start] = c
 
     def print_stats(self):
         print("LUTs:")
