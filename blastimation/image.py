@@ -1,6 +1,7 @@
 from PySide6.QtGui import QImage, QPixmap
 
-from blastimation.blast import Blast, blast_guess_resolution, blast_parse_image, decode_blast, decode_blast_lookup
+from blastimation.blast import Blast, blast_guess_resolution, blast_parse_image, decode_blast, decode_blast_lookup, \
+    blast_get_format_id
 
 
 class BlastImage:
@@ -21,6 +22,18 @@ class BlastImage:
 
         self.pixmap: QPixmap = None
         self.qimage: QImage = None
+
+    def model_data(self):
+        return [
+            "0x%06X" % self.address,
+            "?",
+            self.blast.name,
+            blast_get_format_id(self.blast),
+            self.width,
+            self.height,
+            self.encoded_size,
+            self.decoded_size
+        ]
 
     def decode(self):
         if self.pixmap:

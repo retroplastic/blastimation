@@ -12,12 +12,6 @@ from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size, blast_get_format_id
 
 
-def make_int_item(value: int) -> QStandardItem:
-    i = QStandardItem()
-    i.setData(value)
-    return i
-
-
 class App(QWidget):
     def __init__(self):
         super().__init__()
@@ -79,7 +73,6 @@ class App(QWidget):
         single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
 
         for addr, image in self.rom.images.items():
-
             match image.blast:
                 case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                     lut_size = blast_get_lut_size(image.blast)
@@ -88,29 +81,10 @@ class App(QWidget):
                 case _:
                     image.decode()
 
-            row = [
-                QStandardItem(QIcon(image.pixmap), "0x%06X" % addr),
-                QStandardItem("?"),
-                QStandardItem(image.blast.name),
-                QStandardItem(blast_get_format_id(image.blast)),
-                make_int_item(image.width),
-                make_int_item(image.height),
-                make_int_item(image.encoded_size),
-                make_int_item(image.decoded_size),
-            ]
-            single_model.appendRow(row)
-
-            """
             single_model.insertRow(0)
-            single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
-            single_model.setData(single_model.index(0, 1), "?")
-            single_model.setData(single_model.index(0, 2), image.blast.name)
-            single_model.setData(single_model.index(0, 3), blast_get_format_id(image.blast))
-            single_model.setData(single_model.index(0, 4), image.width)
-            single_model.setData(single_model.index(0, 5), image.height)
-            single_model.setData(single_model.index(0, 6), image.encoded_size)
-            single_model.setData(single_model.index(0, 7), image.decoded_size)
-            """
+            items = image.model_data()
+            for i in range(len(items)):
+                single_model.setData(single_model.index(0, i), items[i])
 
         return single_model
 
