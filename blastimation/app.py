@@ -47,6 +47,11 @@ class App(QWidget):
 
         self.single_model = self.make_single_model()
 
+        self.list_toggle_button_states = [
+            (self.style().standardIcon(QStyle.SP_FileDialogListView), "Grid view"),
+            (self.style().standardIcon(QStyle.SP_FileDialogDetailedView), "List view")
+        ]
+
         # Global widgets
         self.image_label = QLabel()
         self.lut_view = QListView()
@@ -57,6 +62,7 @@ class App(QWidget):
         self.single_stack_widget = QStackedWidget()
         self.composite_view = QTreeView()
         self.composite_proxy_model = QSortFilterProxyModel()
+        self.list_toggle_button = QToolButton()
 
         self.init_models()
         self.init_widgets()
@@ -175,20 +181,13 @@ class App(QWidget):
 
         main_layout = QVBoxLayout(self)
 
-        # list_toggle_button = QPushButton(QIcon("res/icons/view-grid-symbolic.svg"), "List", self)
-
-        list_toggle_button = QToolButton(self)
-        list_toggle_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
-        list_toggle_button.setToolTip("Change playlistview")
-
-        list_toggle_button2 = QToolButton(self)
-        list_toggle_button2.setIcon(self.style().standardIcon(QStyle.SP_FileDialogListView))
-        list_toggle_button2.setToolTip("Change playlistview")
+        self.list_toggle_button.setIcon(self.list_toggle_button_states[0][0])
+        self.list_toggle_button.setToolTip(self.list_toggle_button_states[0][1])
+        self.list_toggle_button.clicked.connect(self.on_toggle_list_mode)
 
         menu_buttons = QHBoxLayout()
         menu_buttons.addStretch()
-        menu_buttons.addWidget(list_toggle_button)
-        menu_buttons.addWidget(list_toggle_button2)
+        menu_buttons.addWidget(self.list_toggle_button)
 
         main_layout.addWidget(self.image_label)
         main_layout.addLayout(menu_buttons)
@@ -228,7 +227,6 @@ class App(QWidget):
 
         self.single_stack_widget.addWidget(self.single_view)
         self.single_stack_widget.addWidget(self.single_icon_view)
-        self.single_stack_widget.setCurrentIndex(1)
 
         tab_widget.addTab(self.single_stack_widget, "Single")
         tab_widget.addTab(self.composite_view, "Multi")
@@ -250,6 +248,19 @@ class App(QWidget):
         lists_layout.addWidget(self.lut_widget)
 
         main_layout.addLayout(lists_layout)
+
+    def on_toggle_list_mode(self):
+        if self.single_stack_widget.currentIndex() == 0:
+            # List is active, make grid
+            self.single_stack_widget.setCurrentIndex(1)
+            self.list_toggle_button.setIcon(self.list_toggle_button_states[1][0])
+            self.list_toggle_button.setToolTip(self.list_toggle_button_states[1][1])
+
+        else:
+            # Grid is active, make list
+            self.single_stack_widget.setCurrentIndex(0)
+            self.list_toggle_button.setIcon(self.list_toggle_button_states[0][0])
+            self.list_toggle_button.setToolTip(self.list_toggle_button_states[0][1])
 
     def on_single_select(self, model_index):
         addr_i = self.single_proxy_model.index(model_index.row(), 0)
