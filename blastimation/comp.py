@@ -1,6 +1,6 @@
 from enum import Enum
 
-from blastimation.blast import Blast
+from blastimation.blast import Blast, blast_get_format_id
 
 
 class CompType(Enum):
@@ -34,3 +34,16 @@ class Composite:
 
     def decoded_size(self, images):
         return 0
+
+    def model_data(self, images):
+        return [
+            "0x%06X" % self.addresses[0],
+            self.name,
+            self.blast.name,
+            blast_get_format_id(self.blast),
+            self.width(images),
+            self.height(images),
+            self.encoded_size(images),
+            self.decoded_size(images),
+            self.type.name,
+        ]

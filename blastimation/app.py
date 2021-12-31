@@ -37,10 +37,11 @@ class App(QWidget):
 
         self.lut_models = {}
 
-        self.rom = Rom(sys.argv[1])
+        self.rom = None
         self.image = None
 
         self.single_model = self.make_single_model()
+        self.composite_model = self.make_composite_model()
 
         self.list_toggle_button_states = [
             (self.style().standardIcon(QStyle.SP_FileDialogListView), "Grid view"),
@@ -59,21 +60,20 @@ class App(QWidget):
         self.composite_proxy_model = QSortFilterProxyModel()
         self.list_toggle_button = QToolButton()
 
-        self.init_models()
         self.init_widgets()
 
     @staticmethod
     def make_single_model():
-        single_model = QStandardItemModel(0, 8)
-        single_model.setHeaderData(0, Qt.Horizontal, "Start")
-        single_model.setHeaderData(1, Qt.Horizontal, "Name")
-        single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
-        single_model.setHeaderData(3, Qt.Horizontal, "Format")
-        single_model.setHeaderData(4, Qt.Horizontal, "Width")
-        single_model.setHeaderData(5, Qt.Horizontal, "Height")
-        single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
-        single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
-        return single_model
+        m = QStandardItemModel(0, 8)
+        m.setHeaderData(0, Qt.Horizontal, "Start")
+        m.setHeaderData(1, Qt.Horizontal, "Name")
+        m.setHeaderData(2, Qt.Horizontal, "Encoding")
+        m.setHeaderData(3, Qt.Horizontal, "Format")
+        m.setHeaderData(4, Qt.Horizontal, "Width")
+        m.setHeaderData(5, Qt.Horizontal, "Height")
+        m.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        m.setHeaderData(7, Qt.Horizontal, "Size Dec")
+        return m
 
     def populate_single_model(self):
         for addr, image in self.rom.images.items():
@@ -90,33 +90,29 @@ class App(QWidget):
             for i in range(len(items)):
                 self.single_model.setData(self.single_model.index(0, i), items[i])
 
-    def make_composite_model(self):
-        single_model = QStandardItemModel(0, 9)
-        single_model.setHeaderData(0, Qt.Horizontal, "Start")
-        single_model.setHeaderData(1, Qt.Horizontal, "Name")
-        single_model.setHeaderData(2, Qt.Horizontal, "Encoding")
-        single_model.setHeaderData(3, Qt.Horizontal, "Format")
-        single_model.setHeaderData(4, Qt.Horizontal, "Width")
-        single_model.setHeaderData(5, Qt.Horizontal, "Height")
-        single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
-        single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
-        single_model.setHeaderData(8, Qt.Horizontal, "Comp")
+    @staticmethod
+    def make_composite_model():
+        m = QStandardItemModel(0, 9)
+        m.setHeaderData(0, Qt.Horizontal, "Start")
+        m.setHeaderData(1, Qt.Horizontal, "Name")
+        m.setHeaderData(2, Qt.Horizontal, "Encoding")
+        m.setHeaderData(3, Qt.Horizontal, "Format")
+        m.setHeaderData(4, Qt.Horizontal, "Width")
+        m.setHeaderData(5, Qt.Horizontal, "Height")
+        m.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        m.setHeaderData(7, Qt.Horizontal, "Size Dec")
+        m.setHeaderData(8, Qt.Horizontal, "Comp")
+        return m
 
+    def populate_comp_model(self):
         for addr, comp in self.rom.comps.items():
-            single_model.insertRow(0)
-            single_model.setData(single_model.index(0, 0), "0x%06X" % addr)
-            single_model.setData(single_model.index(0, 1), comp.name)
-            single_model.setData(single_model.index(0, 2), comp.blast.name)
-            single_model.setData(single_model.index(0, 3), blast_get_format_id(comp.blast))
-            single_model.setData(single_model.index(0, 4), comp.width(self.rom.images))
-            single_model.setData(single_model.index(0, 5), comp.height(self.rom.images))
-            single_model.setData(single_model.index(0, 6), comp.encoded_size(self.rom.images))
-            single_model.setData(single_model.index(0, 7), comp.decoded_size(self.rom.images))
-            single_model.setData(single_model.index(0, 8), comp.type.name)
+            self.composite_model.insertRow(0)
 
-        return single_model
+            items = comp.model_data(self.rom.images)
+            for i in range(len(items)):
+                self.composite_model.setData(self.composite_model.index(0, i), items[i])
 
-    def init_models(self):
+    def init_luts(self):
         for lut_size in self.current_lut.keys():
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
             for k in self.rom.luts[lut_size].keys():
@@ -127,9 +123,8 @@ class App(QWidget):
         self.single_proxy_model.setSourceModel(self.single_model)
         self.single_proxy_model.setFilterKeyColumn(2)
 
-        composite_model = self.make_composite_model()
         self.composite_proxy_model.setDynamicSortFilter(True)
-        self.composite_proxy_model.setSourceModel(composite_model)
+        self.composite_proxy_model.setSourceModel(self.composite_model)
         self.composite_proxy_model.setFilterKeyColumn(2)
 
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -349,13 +344,19 @@ class App(QWidget):
         if scaled_size != self.image_label.pixmap().size():
             self.update_image_label()
 
+    def post_initialize(self):
+        self.rom = Rom(sys.argv[1])
+        self.init_luts()
+        self.image = list(self.rom.images.values())[0]
+        self.image.decode()
+        self.update_image_label()
+        self.populate_single_model()
+        self.populate_comp_model()
+        self.initialized = True
+
     def changeEvent(self, event):
         if event.type() == QEvent.ActivationChange and not self.initialized:
-            self.image = list(self.rom.images.values())[0]
-            self.image.decode()
-            self.update_image_label()
-            self.populate_single_model()
-            self.initialized = True
+            self.post_initialize()
 
     def update_image_label(self):
         self.image_label.setPixmap(
