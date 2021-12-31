@@ -172,6 +172,13 @@ class App(QWidget):
         )
 
         main_layout = QVBoxLayout(self)
+
+        list_toggle_button = QPushButton(QIcon("res/icons/view-grid-symbolic.svg"), "List", self)
+
+        menu_buttons = QHBoxLayout()
+        menu_buttons.addWidget(list_toggle_button)
+
+        main_layout.addLayout(menu_buttons)
         main_layout.addWidget(self.image_label)
 
         blast_type_names = ["All"]
