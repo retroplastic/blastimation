@@ -38,6 +38,8 @@ class App(QWidget):
         self.image = list(self.rom.images.values())[0]
         self.image.decode()
 
+        self.single_model = self.make_single_model()
+
         # Global widgets
         self.image_label = QLabel()
         self.lut_view = QListView()
@@ -86,6 +88,22 @@ class App(QWidget):
 
         return single_model
 
+    def decode_all(self):
+        for addr, image in self.rom.images.items():
+            # Decode all
+            match image.blast:
+                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                    lut_size = blast_get_lut_size(image.blast)
+                    lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                    image.decode_lut(lut)
+                case _:
+                    image.decode()
+
+            # Update icon
+            i = self.single_model.item(0)
+            icon = QIcon(image.pixmap)
+            i.setIcon(icon)
+
     def make_composite_model(self):
         single_model = QStandardItemModel(0, 9)
         single_model.setHeaderData(0, Qt.Horizontal, "Start")
@@ -119,9 +137,8 @@ class App(QWidget):
                 self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
 
     def init_widgets(self):
-        single_model = self.make_single_model()
         self.single_proxy_model.setDynamicSortFilter(True)
-        self.single_proxy_model.setSourceModel(single_model)
+        self.single_proxy_model.setSourceModel(self.single_model)
         self.single_proxy_model.setFilterKeyColumn(2)
 
         composite_model = self.make_composite_model()

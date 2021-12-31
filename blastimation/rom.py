@@ -16,6 +16,8 @@ class Rom:
             256: {}
         }
 
+        self.in_comp: list[int] = []
+
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
 
@@ -116,6 +118,8 @@ class Rom:
                     c.addresses = addresses
                     c.blast = blast_type
                     c.type = comp_type
+
+                    self.in_comp.extend(addresses)
 
                     self.comps[c.start] = c
 
