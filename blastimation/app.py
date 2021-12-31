@@ -13,6 +13,18 @@ from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size, blast_get_format_id
 
 
+class UpdateTreeView(QTreeView):
+    def __init__(self):
+        super().__init__()
+        self.already_drawn = []
+
+    def drawRow(self, painter, options, index):
+        if index.row() not in self.already_drawn:
+            print("Drawing row at", index.row())
+            self.already_drawn.append(index.row())
+        super().drawRow(painter, options, index)
+
+
 class App(QWidget):
     def __init__(self):
         super().__init__()
@@ -53,7 +65,9 @@ class App(QWidget):
         self.image_label = QLabel()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
-        self.single_view = QTreeView()
+        self.single_view = UpdateTreeView()
+        self.single_view.sortByColumn(0, Qt.AscendingOrder)
+
         self.single_icon_view = QListView()
         self.single_proxy_model = QSortFilterProxyModel()
         self.single_stack_widget = QStackedWidget()
@@ -86,13 +100,14 @@ class App(QWidget):
                 case _:
                     image.decode()
 
-            self.single_model.insertRow(0)
+            last_row = self.single_model.rowCount()
+            self.single_model.insertRow(last_row)
             items = image.model_data()
             for i in range(len(items)):
-                self.single_model.setData(self.single_model.index(0, i), items[i])
+                self.single_model.setData(self.single_model.index(last_row, i), items[i])
 
             # Update icon
-            i = self.single_model.item(0)
+            i = self.single_model.item(last_row)
             icon = QIcon(image.pixmap)
             i.setIcon(icon)
 
@@ -112,11 +127,12 @@ class App(QWidget):
 
     def populate_comp_model(self):
         for addr, comp in self.rom.comps.items():
-            self.composite_model.insertRow(0)
+            last_row = self.composite_model.rowCount()
+            self.composite_model.insertRow(last_row)
 
             items = comp.model_data(self.rom.images)
             for i in range(len(items)):
-                self.composite_model.setData(self.composite_model.index(0, i), items[i])
+                self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
     def init_luts(self):
         for lut_size in self.current_lut.keys():
