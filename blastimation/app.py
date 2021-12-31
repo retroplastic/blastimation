@@ -13,18 +13,6 @@ from blastimation.rom import Rom, CompType
 from blastimation.blast import Blast, blast_get_lut_size, blast_get_format_id
 
 
-class UpdateTreeView(QTreeView):
-    def __init__(self):
-        super().__init__()
-        self.already_drawn = []
-
-    def drawRow(self, painter, options, index):
-        if index.row() not in self.already_drawn:
-            print("Drawing row at", index.row())
-            self.already_drawn.append(index.row())
-        super().drawRow(painter, options, index)
-
-
 class App(QWidget):
     def __init__(self):
         super().__init__()
@@ -65,7 +53,7 @@ class App(QWidget):
         self.image_label = QLabel()
         self.lut_view = QListView()
         self.lut_widget = QWidget()
-        self.single_view = UpdateTreeView()
+        self.single_view = QTreeView()
         self.single_view.sortByColumn(0, Qt.AscendingOrder)
 
         self.single_icon_view = QListView()
