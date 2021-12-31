@@ -1,4 +1,5 @@
 import sys
+import threading
 
 from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
@@ -361,7 +362,8 @@ class App(QWidget):
 
     def changeEvent(self, event):
         if event.type() == QEvent.ActivationChange and not self.initialized:
-            self.post_initialize()
+            t = threading.Thread(target=self.post_initialize)
+            t.start()
 
     def update_image_label(self):
         self.image_label.setPixmap(
