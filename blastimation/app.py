@@ -22,7 +22,8 @@ class App(QWidget):
             256: 0x152970
         }
 
-        self.blast_types = [
+        self.blast_filter_types = [
+            None,
             Blast.BLAST1_RGBA16,
             Blast.BLAST2_RGBA32,
             Blast.BLAST3_IA8,
@@ -138,9 +139,10 @@ class App(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(self.image_label)
 
-        blast_type_names = []
-        for t in self.blast_types:
-            blast_type_names.append(t.name)
+        blast_type_names = ["All"]
+        for t in self.blast_filter_types:
+            if t:
+                blast_type_names.append(t.name)
 
         blast_filter_box = QComboBox()
         blast_filter_box.addItems(blast_type_names)
@@ -268,7 +270,11 @@ class App(QWidget):
                 self.update_image_label()
 
     def on_blast_filter_changed(self, index):
-        blast_type = self.blast_types[index]
+        blast_type = self.blast_filter_types[index]
+        if not blast_type:
+            self.single_proxy_model.setFilterFixedString("")
+            self.composite_proxy_model.setFilterFixedString("")
+            return
 
         self.single_proxy_model.setFilterFixedString(blast_type.name)
         self.composite_proxy_model.setFilterFixedString(blast_type.name)
