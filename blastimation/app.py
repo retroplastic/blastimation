@@ -1,7 +1,7 @@
 import sys
 
-from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor
+from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView
 
@@ -43,6 +43,7 @@ class App(QWidget):
         self.lut_view = QListView()
         self.lut_widget = QWidget()
         self.single_view = QTreeView()
+        self.single_icon_view = QListView()
         self.single_proxy_model = QSortFilterProxyModel()
         self.composite_view = QTreeView()
         self.composite_proxy_model = QSortFilterProxyModel()
@@ -72,6 +73,17 @@ class App(QWidget):
                 single_model.setData(single_model.index(0, 5), image.height)
                 single_model.setData(single_model.index(0, 6), image.encoded_size)
                 single_model.setData(single_model.index(0, 7), image.decoded_size)
+
+                match image.blast:
+                    case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                        lut_size = blast_get_lut_size(blast_type)
+                        lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                        image.decode_lut(lut)
+                    case _:
+                        image.decode()
+                i = single_model.item(0)
+                icon = QIcon(image.pixmap)
+                i.setIcon(icon)
 
         return single_model
 
@@ -149,6 +161,11 @@ class App(QWidget):
         self.single_view.selectionModel().currentChanged.connect(self.on_single_select)
         self.single_view.setSortingEnabled(True)
 
+        self.single_icon_view.setViewMode(QListView.IconMode)
+        self.single_icon_view.setMovement(QListView.Static)
+        self.single_icon_view.setIconSize(QSize(100, 100))
+        self.single_icon_view.setModel(self.single_proxy_model)
+
         self.composite_view.setRootIsDecorated(False)
         self.composite_view.setAlternatingRowColors(True)
         self.composite_view.setModel(self.composite_proxy_model)
@@ -162,6 +179,7 @@ class App(QWidget):
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         tab_widget.addTab(self.single_view, "Single")
         tab_widget.addTab(self.composite_view, "Multi")
+        tab_widget.addTab(self.single_icon_view, "Icons")
         blast_list_layout.addWidget(tab_widget)
 
         self.lut_view.setObjectName("lutView")
