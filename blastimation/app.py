@@ -94,9 +94,12 @@ class App(QWidget):
                 self.single_model.setData(self.single_model.index(last_row, i), items[i])
 
             # Update icon
-            i = self.single_model.item(last_row)
-            icon = QIcon(image.pixmap)
-            i.setIcon(icon)
+            icon = QIcon(image.pixmap.scaled(
+                QSize(128, 128),
+                Qt.KeepAspectRatio,
+                Qt.FastTransformation,
+            ))
+            self.single_model.item(last_row).setIcon(icon)
 
     @staticmethod
     def make_composite_model():
@@ -173,7 +176,7 @@ class App(QWidget):
 
         self.single_icon_view.setViewMode(QListView.IconMode)
         self.single_icon_view.setMovement(QListView.Static)
-        self.single_icon_view.setIconSize(QSize(100, 100))
+        self.single_icon_view.setIconSize(QSize(128, 128))
         self.single_icon_view.setModel(self.single_proxy_model)
         self.single_icon_view.selectionModel().currentChanged.connect(self.on_single_select)
 
