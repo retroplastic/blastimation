@@ -163,6 +163,7 @@ class App(QWidget):
         blast_filter_box.addItems(blast_type_names)
         blast_filter_box.setCurrentIndex(0)
         blast_filter_box.currentIndexChanged.connect(self.on_blast_filter_changed)
+        blast_filter_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.single_view.setRootIsDecorated(False)
         self.single_view.setAlternatingRowColors(True)
@@ -182,9 +183,6 @@ class App(QWidget):
         self.composite_view.selectionModel().currentChanged.connect(self.on_composite_select)
         self.composite_view.setSortingEnabled(True)
 
-        blast_list_layout = QVBoxLayout()
-        blast_list_layout.addWidget(blast_filter_box)
-
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -193,19 +191,18 @@ class App(QWidget):
 
         tab_widget.addTab(self.single_stack_widget, "Single")
         tab_widget.addTab(self.composite_view, "Multi")
-        blast_list_layout.addWidget(tab_widget)
 
         self.lut_auto_button.clicked.connect(self.on_auto_lut)
         self.lut_auto_button.hide()
         self.lut_combo_box.currentIndexChanged.connect(self.on_lut_select)
         self.lut_combo_box.hide()
 
-        menu_buttons.addStretch()
+        menu_buttons.addWidget(blast_filter_box)
         menu_buttons.addWidget(self.lut_combo_box)
         menu_buttons.addWidget(self.lut_auto_button)
         menu_buttons.addWidget(self.list_toggle_button)
 
-        main_layout.addLayout(blast_list_layout)
+        main_layout.addWidget(tab_widget)
 
     def on_toggle_list_mode(self):
         if self.single_stack_widget.currentIndex() == 0:
