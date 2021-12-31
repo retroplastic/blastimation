@@ -4,13 +4,12 @@ import threading
 from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
-    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QSpacerItem, QStackedLayout, \
-    QStackedWidget
+    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
-from blastimation.blast import Blast, blast_get_lut_size, blast_get_format_id
+from blastimation.blast import Blast, blast_get_lut_size
 
 
 class App(QWidget):
