@@ -32,7 +32,6 @@ class App(QWidget):
         ]
 
         self.lut_models = {}
-        self.composite_models = {}
 
         self.rom = Rom(sys.argv[1])
         self.image = list(self.rom.images[Blast.BLAST1_RGBA16].values())[0]
@@ -119,11 +118,6 @@ class App(QWidget):
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
             for k in self.rom.luts[lut_size].keys():
                 self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
-
-        for t in self.blast_types:
-            self.composite_models[t] = QStandardItemModel(0, 1)
-            for k in self.rom.comps[t].keys():
-                self.composite_models[t].appendRow(QStandardItem("%06X" % k))
 
     def init_widgets(self):
         single_model = self.make_single_model()
