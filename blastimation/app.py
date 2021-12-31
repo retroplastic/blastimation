@@ -4,7 +4,7 @@ import threading
 from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
-    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
+    QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
@@ -50,10 +50,10 @@ class App(QWidget):
 
         # Global widgets
         self.image_label = QLabel()
-        self.lut_view = QListView()
-        self.lut_widget = QWidget()
+        self.lut_combo_box = QComboBox()
         self.single_view = QTreeView()
         self.single_view.sortByColumn(0, Qt.AscendingOrder)
+        self.lut_auto_button = QPushButton("Guess LUT", self)
 
         self.single_icon_view = QListView()
         self.single_proxy_model = QSortFilterProxyModel()
@@ -150,8 +150,6 @@ class App(QWidget):
         self.list_toggle_button.clicked.connect(self.on_toggle_list_mode)
 
         menu_buttons = QHBoxLayout()
-        menu_buttons.addStretch()
-        menu_buttons.addWidget(self.list_toggle_button)
 
         main_layout.addWidget(self.image_label)
         main_layout.addLayout(menu_buttons)
@@ -176,6 +174,7 @@ class App(QWidget):
         self.single_icon_view.setMovement(QListView.Static)
         self.single_icon_view.setIconSize(QSize(100, 100))
         self.single_icon_view.setModel(self.single_proxy_model)
+        self.single_icon_view.selectionModel().currentChanged.connect(self.on_single_select)
 
         self.composite_view.setRootIsDecorated(False)
         self.composite_view.setAlternatingRowColors(True)
@@ -196,22 +195,17 @@ class App(QWidget):
         tab_widget.addTab(self.composite_view, "Multi")
         blast_list_layout.addWidget(tab_widget)
 
-        self.lut_view.setObjectName("lutView")
-        self.lut_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.lut_auto_button.clicked.connect(self.on_auto_lut)
+        self.lut_auto_button.hide()
+        self.lut_combo_box.currentIndexChanged.connect(self.on_lut_select)
+        self.lut_combo_box.hide()
 
-        lut_auto_button = QPushButton("Select closest", self)
-        lut_auto_button.clicked.connect(self.on_auto_lut)
+        menu_buttons.addStretch()
+        menu_buttons.addWidget(self.lut_combo_box)
+        menu_buttons.addWidget(self.lut_auto_button)
+        menu_buttons.addWidget(self.list_toggle_button)
 
-        self.lut_widget.hide()
-        lut_layout = QVBoxLayout(self.lut_widget)
-        lut_layout.addWidget(self.lut_view)
-        lut_layout.addWidget(lut_auto_button)
-
-        lists_layout = QHBoxLayout()
-        lists_layout.addLayout(blast_list_layout)
-        lists_layout.addWidget(self.lut_widget)
-
-        main_layout.addLayout(lists_layout)
+        main_layout.addLayout(blast_list_layout)
 
     def on_toggle_list_mode(self):
         if self.single_stack_widget.currentIndex() == 0:
@@ -240,6 +234,16 @@ class App(QWidget):
                 self.image.decode()
 
         self.update_image_label()
+
+        match self.image.blast:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.image.blast)
+                self.lut_combo_box.setModel(self.lut_models[lut_size])
+                self.lut_combo_box.show()
+                self.lut_auto_button.show()
+            case _:
+                self.lut_combo_box.hide()
+                self.lut_auto_button.hide()
 
     def on_composite_select(self, model_index):
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
@@ -291,13 +295,11 @@ class App(QWidget):
         self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
-    def on_lut_select(self, model_index):
-        lut_addr = int(model_index.data(), 16)
-
+    def on_lut_select(self, index):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
-                self.current_lut[lut_size] = lut_addr
+                self.current_lut[lut_size] = int(self.lut_models[lut_size].item(index).text(), 16)
                 lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
                 self.image.decode_lut(lut)
                 self.update_image_label()
@@ -311,16 +313,6 @@ class App(QWidget):
 
         self.single_proxy_model.setFilterFixedString(blast_type.name)
         self.composite_proxy_model.setFilterFixedString(blast_type.name)
-
-        match blast_type:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(blast_type)
-                self.lut_view.setModel(self.lut_models[lut_size])
-                self.lut_view.selectionModel().currentChanged.connect(self.on_lut_select)
-                self.lut_widget.show()
-            case _:
-                self.lut_widget.hide()
-                self.lut_view.setModel(None)
 
     def on_auto_lut(self):
         match self.image.blast:
@@ -341,9 +333,7 @@ class App(QWidget):
 
                 self.current_lut[lut_size] = last_k
                 print(f"Found auto lut %06X" % last_k)
-
-                index = self.lut_models[lut_size].index(row, 0)
-                self.lut_view.setCurrentIndex(index)
+                self.lut_combo_box.setCurrentIndex(row)
 
     def resizeEvent(self, event):
         if not self.image:
