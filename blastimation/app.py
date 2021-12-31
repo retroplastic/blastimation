@@ -3,7 +3,8 @@ import sys
 from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
-    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView
+    QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QSpacerItem, QStackedLayout, \
+    QStackedWidget
 
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
@@ -53,6 +54,7 @@ class App(QWidget):
         self.single_view = QTreeView()
         self.single_icon_view = QListView()
         self.single_proxy_model = QSortFilterProxyModel()
+        self.single_stack_widget = QStackedWidget()
         self.composite_view = QTreeView()
         self.composite_proxy_model = QSortFilterProxyModel()
 
@@ -173,13 +175,23 @@ class App(QWidget):
 
         main_layout = QVBoxLayout(self)
 
-        list_toggle_button = QPushButton(QIcon("res/icons/view-grid-symbolic.svg"), "List", self)
+        # list_toggle_button = QPushButton(QIcon("res/icons/view-grid-symbolic.svg"), "List", self)
+
+        list_toggle_button = QToolButton(self)
+        list_toggle_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+        list_toggle_button.setToolTip("Change playlistview")
+
+        list_toggle_button2 = QToolButton(self)
+        list_toggle_button2.setIcon(self.style().standardIcon(QStyle.SP_FileDialogListView))
+        list_toggle_button2.setToolTip("Change playlistview")
 
         menu_buttons = QHBoxLayout()
+        menu_buttons.addStretch()
         menu_buttons.addWidget(list_toggle_button)
+        menu_buttons.addWidget(list_toggle_button2)
 
-        main_layout.addLayout(menu_buttons)
         main_layout.addWidget(self.image_label)
+        main_layout.addLayout(menu_buttons)
 
         blast_type_names = ["All"]
         for t in self.blast_filter_types:
@@ -213,9 +225,13 @@ class App(QWidget):
 
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        tab_widget.addTab(self.single_view, "Single")
+
+        self.single_stack_widget.addWidget(self.single_view)
+        self.single_stack_widget.addWidget(self.single_icon_view)
+        self.single_stack_widget.setCurrentIndex(1)
+
+        tab_widget.addTab(self.single_stack_widget, "Single")
         tab_widget.addTab(self.composite_view, "Multi")
-        tab_widget.addTab(self.single_icon_view, "Icons")
         blast_list_layout.addWidget(tab_widget)
 
         self.lut_view.setObjectName("lutView")
