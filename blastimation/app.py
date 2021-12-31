@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize
+from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QAbstractItemView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QSpacerItem, QStackedLayout, \
@@ -33,11 +33,12 @@ class App(QWidget):
             Blast.BLAST6_IA8,
         ]
 
+        self.initialized = False
+
         self.lut_models = {}
 
         self.rom = Rom(sys.argv[1])
-        self.image = list(self.rom.images.values())[0]
-        self.image.decode()
+        self.image = None
 
         self.single_model = self.make_single_model()
 
@@ -61,7 +62,8 @@ class App(QWidget):
         self.init_models()
         self.init_widgets()
 
-    def make_single_model(self):
+    @staticmethod
+    def make_single_model():
         single_model = QStandardItemModel(0, 8)
         single_model.setHeaderData(0, Qt.Horizontal, "Start")
         single_model.setHeaderData(1, Qt.Horizontal, "Name")
@@ -71,26 +73,10 @@ class App(QWidget):
         single_model.setHeaderData(5, Qt.Horizontal, "Height")
         single_model.setHeaderData(6, Qt.Horizontal, "Size Enc")
         single_model.setHeaderData(7, Qt.Horizontal, "Size Dec")
-
-        for addr, image in self.rom.images.items():
-            match image.blast:
-                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                    lut_size = blast_get_lut_size(image.blast)
-                    lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
-                    image.decode_lut(lut)
-                case _:
-                    image.decode()
-
-            single_model.insertRow(0)
-            items = image.model_data()
-            for i in range(len(items)):
-                single_model.setData(single_model.index(0, i), items[i])
-
         return single_model
 
-    def decode_all(self):
+    def populate_single_model(self):
         for addr, image in self.rom.images.items():
-            # Decode all
             match image.blast:
                 case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                     lut_size = blast_get_lut_size(image.blast)
@@ -99,10 +85,10 @@ class App(QWidget):
                 case _:
                     image.decode()
 
-            # Update icon
-            i = self.single_model.item(0)
-            icon = QIcon(image.pixmap)
-            i.setIcon(icon)
+            self.single_model.insertRow(0)
+            items = image.model_data()
+            for i in range(len(items)):
+                self.single_model.setData(self.single_model.index(0, i), items[i])
 
     def make_composite_model(self):
         single_model = QStandardItemModel(0, 9)
@@ -356,10 +342,20 @@ class App(QWidget):
                 self.lut_view.setCurrentIndex(index)
 
     def resizeEvent(self, event):
+        if not self.image:
+            return
         scaled_size = self.image.pixmap.size()
         scaled_size.scale(self.image_label.size(), Qt.KeepAspectRatio)
         if scaled_size != self.image_label.pixmap().size():
             self.update_image_label()
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.ActivationChange and not self.initialized:
+            self.image = list(self.rom.images.values())[0]
+            self.image.decode()
+            self.update_image_label()
+            self.populate_single_model()
+            self.initialized = True
 
     def update_image_label(self):
         self.image_label.setPixmap(
