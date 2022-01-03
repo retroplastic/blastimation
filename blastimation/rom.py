@@ -105,7 +105,7 @@ class Rom:
         with open("composites.yaml", "r") as f:
             composites_yaml = ryaml.load(f)
 
-        for blast_type_str, comp_types_dict in composites_yaml.items():
+        for blast_type_str, comp_types_dict in composites_yaml["composites"].items():
             blast_type = getattr(Blast, blast_type_str)
             for comp_type_str, comp_list in comp_types_dict.items():
                 comp_type = getattr(CompType, comp_type_str)
