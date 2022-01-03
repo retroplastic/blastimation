@@ -237,6 +237,8 @@ class App(QWidget):
                 self.lut_combo_box.setModel(self.lut_models[lut_size])
                 self.lut_combo_box.show()
                 self.lut_auto_button.show()
+                lut_index = list(self.rom.luts[lut_size].keys()).index(self.image.lut)
+                self.lut_combo_box.setCurrentIndex(lut_index)
             case _:
                 self.lut_combo_box.hide()
                 self.lut_auto_button.hide()
