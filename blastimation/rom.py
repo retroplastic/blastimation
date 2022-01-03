@@ -102,7 +102,7 @@ class Rom:
                 self.images[address] = BlastImage(blast_type, address, encoded_bytes)
 
     def init_composite_images(self):
-        with open("composites.yaml", "r") as f:
+        with open("meta.yaml", "r") as f:
             composites_yaml = ryaml.load(f)
 
         for blast_type_str, comp_types_dict in composites_yaml["composites"].items():
