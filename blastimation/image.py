@@ -10,6 +10,7 @@ class BlastImage:
         self.address: int = address
         self.width: int = width
         self.height: int = height
+        self.lut: int = 0
 
         self.blast: Blast = blast_type
         self.encoded: bytes = encoded

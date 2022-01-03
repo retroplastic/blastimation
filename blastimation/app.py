@@ -18,11 +18,6 @@ class App(QWidget):
         self.setWindowTitle("Blastimation")
         self.resize(960, 1080)
 
-        self.current_lut = {
-            128: 0x047480,
-            256: 0x152970
-        }
-
         self.blast_filter_types = [
             None,
             Blast.BLAST1_RGBA16,
@@ -82,7 +77,7 @@ class App(QWidget):
             match image.blast:
                 case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                     lut_size = blast_get_lut_size(image.blast)
-                    lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                    lut = self.rom.luts[lut_size][image.lut]
                     image.decode_lut(lut)
                 case _:
                     image.decode()
@@ -125,7 +120,7 @@ class App(QWidget):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
     def init_luts(self):
-        for lut_size in self.current_lut.keys():
+        for lut_size in [128, 256]:
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
             for k in self.rom.luts[lut_size].keys():
                 self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
@@ -229,7 +224,7 @@ class App(QWidget):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
-                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                lut = self.rom.luts[lut_size][self.image.lut]
                 self.image.decode_lut(lut)
             case _:
                 self.image.decode()
@@ -300,8 +295,8 @@ class App(QWidget):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
-                self.current_lut[lut_size] = int(self.lut_models[lut_size].item(index).text(), 16)
-                lut = self.rom.luts[lut_size][self.current_lut[lut_size]]
+                self.image.lut = int(self.lut_models[lut_size].item(index).text(), 16)
+                lut = self.rom.luts[lut_size][self.image.lut]
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
@@ -332,7 +327,7 @@ class App(QWidget):
                     row += 1
                 assert last_k != 0
 
-                self.current_lut[lut_size] = last_k
+                self.image.lut = last_k
                 print(f"Found auto lut %06X" % last_k)
                 self.lut_combo_box.setCurrentIndex(row)
 

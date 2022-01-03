@@ -1,7 +1,7 @@
 import struct
 import ryaml
 
-from blastimation.blast import Blast
+from blastimation.blast import Blast, blast_get_lut_size
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
 
@@ -72,6 +72,11 @@ class Rom:
                 self.luts[size][address] = data
             elif s["type"] == "blast":
                 self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
+                lut_size = blast_get_lut_size(s["blast"])
+                if lut_size:
+                    lut_keys = list(self.luts[lut_size].keys())
+                    lut_keys.sort()
+                    self.images[address].lut = lut_keys[-1]
 
     def load_rom(self, rom_path: str):
         with open(rom_path, "rb") as f:
