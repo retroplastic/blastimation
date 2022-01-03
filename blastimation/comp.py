@@ -17,23 +17,33 @@ class Composite:
         self.blast: Blast = Blast.BLAST0
         self.type: CompType = CompType.TopBottom
 
-    def name(self):
-        # if self.name:
-        #    return self.name
-
-        return "0x%06X" % self.start
-
     def width(self, images):
-        return 0
+        single_width = images[self.addresses[-1]].width
+        match self.type:
+            case CompType.TopBottom:
+                return single_width
+            case (CompType.RightLeft | CompType.Quad):
+                return single_width * 2
 
     def height(self, images):
-        return 0
+        single_height = images[self.addresses[-1]].height
+        match self.type:
+            case CompType.RightLeft:
+                return single_height
+            case (CompType.TopBottom | CompType.Quad):
+                return single_height * 2
 
     def encoded_size(self, images):
-        return 0
+        size = 0
+        for a in self.addresses:
+            size += images[a].encoded_size
+        return size
 
     def decoded_size(self, images):
-        return 0
+        size = 0
+        for a in self.addresses:
+            size += images[a].decoded_size
+        return size
 
     def model_data(self, images):
         return [
