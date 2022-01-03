@@ -210,19 +210,20 @@ class App(QWidget):
     def on_toggle_list_mode(self):
         if self.single_stack_widget.currentIndex() == 0:
             # List is active, make grid
-            self.single_stack_widget.setCurrentIndex(1)
-            self.list_toggle_button.setIcon(self.list_toggle_button_states[1][0])
-            self.list_toggle_button.setToolTip(self.list_toggle_button_states[1][1])
-
+            new_index = 1
         else:
             # Grid is active, make list
-            self.single_stack_widget.setCurrentIndex(0)
-            self.list_toggle_button.setIcon(self.list_toggle_button_states[0][0])
-            self.list_toggle_button.setToolTip(self.list_toggle_button_states[0][1])
+            new_index = 0
+        self.single_stack_widget.setCurrentIndex(new_index)
+        self.list_toggle_button.setIcon(self.list_toggle_button_states[new_index][0])
+        self.list_toggle_button.setToolTip(self.list_toggle_button_states[new_index][1])
 
     def on_single_select(self, model_index):
         addr_i = self.single_proxy_model.index(model_index.row(), 0)
-        addr = int(self.single_proxy_model.data(addr_i), 16)
+        addr_str = self.single_proxy_model.data(addr_i)
+        if not addr_str:
+            return
+        addr = int(addr_str, 16)
 
         self.image = self.rom.images[addr]
         match self.image.blast:
