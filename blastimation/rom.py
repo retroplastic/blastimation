@@ -17,11 +17,14 @@ class Rom:
             256: {}
         }
 
+        self.lut_overrides: dict[int, list[int]] = {}
         self.in_comp: list[int] = []
 
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
         self.animations: dict[int:Animation] = {}
+
+        self.load_lut_overrides()
 
         if path.endswith(".yaml"):
             self.load_yaml(path)
@@ -29,6 +32,16 @@ class Rom:
             self.load_rom(path)
 
         self.init_composite_images()
+
+    def load_lut_overrides(self):
+        with open("lut_overrides.yaml", "r") as f:
+            y = ryaml.load(f)
+
+        for lut, lists in y.items():
+            if lut not in self.lut_overrides:
+                self.lut_overrides[lut] = []
+            for li in lists:
+                self.lut_overrides[lut].extend(li)
 
     def load_yaml(self, yaml_path: str):
         with open(yaml_path, "r") as f:
@@ -79,6 +92,10 @@ class Rom:
                     lut_keys = list(self.luts[lut_size].keys())
                     lut_keys.sort()
                     self.images[address].lut = lut_keys[-1]
+
+                    for lut, addresses in self.lut_overrides.items():
+                        if address in addresses:
+                            self.images[address].lut = lut
 
     def load_rom(self, rom_path: str):
         with open(rom_path, "rb") as f:
