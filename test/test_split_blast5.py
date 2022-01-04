@@ -1,4 +1,7 @@
+import pprint
 import unittest
+
+import ryaml
 
 from blastimation.blast import Blast
 from blastimation.rom import Rom
@@ -14,13 +17,30 @@ class Test(unittest.TestCase):
             if image.blast == Blast.BLAST5_RGBA32:
                 blast5_addrs.append(image.address)
 
-        #for a in blast5_addrs:
-        #    print(a)
+        with open("meta.yaml", "r") as f:
+            meta_yaml = ryaml.load(f)
 
-        print("len", len(blast5_addrs), len(blast5_addrs) / 4)
+        single_image_animation_elements = []
+
+        for blast_type_str, animation_list in meta_yaml["animations"].items():
+            blast_type = getattr(Blast, blast_type_str)
+            if blast_type == Blast.BLAST5_RGBA32:
+                for animation in animation_list:
+                    single_image_animation_elements.extend(animation)
+
+        blast5_addrs.remove(0x1D83B8)  # Empty, messed up order
+
+        # Remove single element animations
+        for e in single_image_animation_elements:
+            blast5_addrs.remove(e)
 
         chunk_size = 4
         chunked_list = [blast5_addrs[i:i + chunk_size] for i in range(0, len(blast5_addrs), chunk_size)]
 
         for e in chunked_list:
-            print("      - [0x%06X, 0x%06X, 0x%06X, 0x%06X]" % tuple(e))
+            if len(e) == 4:
+                print("      - [0x%06X, 0x%06X, 0x%06X, 0x%06X]" % tuple(e))
+            else:
+                print("remainder", e)
+
+        print("len", len(blast5_addrs), len(blast5_addrs) / 4)
