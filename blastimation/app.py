@@ -1,7 +1,7 @@
 import sys
 import threading
 
-from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent
+from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent, QTimer
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
@@ -35,6 +35,11 @@ class App(QWidget):
 
         self.rom = None
         self.image = None
+        self.animation = None
+        self.animation_timer: QTimer = QTimer()
+        self.animation_timer.setInterval(500)
+        self.animation_timer.timeout.connect(self.animate)
+        self.animation_frame: int = 0
 
         self.single_model = self.make_single_model()
         self.composite_model = self.make_composite_model()
@@ -63,6 +68,15 @@ class App(QWidget):
         self.animation_proxy_model = QSortFilterProxyModel()
 
         self.init_widgets()
+
+    def animate(self):
+        frame_addr = self.animation.addresses[self.animation_frame]
+        self.image = self.rom.images[frame_addr]
+        self.update_image_label()
+
+        self.animation_frame += 1
+        if self.animation_frame >= self.animation.frames():
+            self.animation_frame = 0
 
     @staticmethod
     def make_single_model():
@@ -337,6 +351,7 @@ class App(QWidget):
         address = int(self.animation_proxy_model.data(addr_i), 16)
 
         a: Animation = self.rom.animations[address]
+        self.animation = a
 
         images = []
         for addr in a.addresses:
@@ -346,6 +361,10 @@ class App(QWidget):
 
         self.image = images[0]
         self.update_image_label()
+
+        self.animation_frame = 0
+
+        self.animation_timer.start()
 
     def on_lut_select(self, index):
         match self.image.blast:

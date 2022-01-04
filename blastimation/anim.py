@@ -26,6 +26,9 @@ class Animation:
             size += images[a].decoded_size
         return size
 
+    def frames(self):
+        return len(self.addresses)
+
     def model_data(self, images):
         return [
             "0x%06X" % self.addresses[0],
@@ -36,5 +39,5 @@ class Animation:
             self.height(images),
             self.encoded_size(images),
             self.decoded_size(images),
-            len(self.addresses),
+            self.frames(),
         ]
