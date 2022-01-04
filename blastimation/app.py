@@ -6,6 +6,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, Q
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
+from blastimation.anim import Animation
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
@@ -37,6 +38,7 @@ class App(QWidget):
 
         self.single_model = self.make_single_model()
         self.composite_model = self.make_composite_model()
+        self.animation_model = self.make_animation_model()
 
         self.list_toggle_button_states = [
             (self.style().standardIcon(QStyle.SP_FileDialogListView), "Grid view"),
@@ -57,6 +59,9 @@ class App(QWidget):
         self.composite_proxy_model = QSortFilterProxyModel()
         self.list_toggle_button = QToolButton()
 
+        self.animation_view = QTreeView()
+        self.animation_proxy_model = QSortFilterProxyModel()
+
         self.init_widgets()
 
     @staticmethod
@@ -70,6 +75,20 @@ class App(QWidget):
         m.setHeaderData(5, Qt.Horizontal, "Height")
         m.setHeaderData(6, Qt.Horizontal, "Size Enc")
         m.setHeaderData(7, Qt.Horizontal, "Size Dec")
+        return m
+
+    @staticmethod
+    def make_animation_model():
+        m = QStandardItemModel(0, 9)
+        m.setHeaderData(0, Qt.Horizontal, "Start")
+        m.setHeaderData(1, Qt.Horizontal, "Name")
+        m.setHeaderData(2, Qt.Horizontal, "Encoding")
+        m.setHeaderData(3, Qt.Horizontal, "Format")
+        m.setHeaderData(4, Qt.Horizontal, "Width")
+        m.setHeaderData(5, Qt.Horizontal, "Height")
+        m.setHeaderData(6, Qt.Horizontal, "Size Enc")
+        m.setHeaderData(7, Qt.Horizontal, "Size Dec")
+        m.setHeaderData(8, Qt.Horizontal, "Frames")
         return m
 
     def populate_single_model(self):
@@ -119,6 +138,15 @@ class App(QWidget):
             for i in range(len(items)):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
+    def populate_animation_model(self):
+        for addr, animation in self.rom.animations.items():
+            last_row = self.animation_model.rowCount()
+            self.animation_model.insertRow(last_row)
+
+            items = animation.model_data(self.rom.images)
+            for i in range(len(items)):
+                self.animation_model.setData(self.animation_model.index(last_row, i), items[i])
+
     def init_luts(self):
         for lut_size in [128, 256]:
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
@@ -133,6 +161,10 @@ class App(QWidget):
         self.composite_proxy_model.setDynamicSortFilter(True)
         self.composite_proxy_model.setSourceModel(self.composite_model)
         self.composite_proxy_model.setFilterKeyColumn(2)
+
+        self.animation_proxy_model.setDynamicSortFilter(True)
+        self.animation_proxy_model.setSourceModel(self.animation_model)
+        self.animation_proxy_model.setFilterKeyColumn(2)
 
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -181,6 +213,12 @@ class App(QWidget):
         self.composite_view.selectionModel().currentChanged.connect(self.on_composite_select)
         self.composite_view.setSortingEnabled(True)
 
+        self.animation_view.setRootIsDecorated(False)
+        self.animation_view.setAlternatingRowColors(True)
+        self.animation_view.setModel(self.animation_proxy_model)
+        self.animation_view.selectionModel().currentChanged.connect(self.on_animation_select)
+        self.animation_view.setSortingEnabled(True)
+
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -189,6 +227,7 @@ class App(QWidget):
 
         tab_widget.addTab(self.single_stack_widget, "Single")
         tab_widget.addTab(self.composite_view, "Multi")
+        tab_widget.addTab(self.animation_view, "Anim")
 
         self.lut_auto_button.clicked.connect(self.on_auto_lut)
         self.lut_auto_button.hide()
@@ -293,6 +332,21 @@ class App(QWidget):
         self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
+    def on_animation_select(self, model_index):
+        addr_i = self.animation_proxy_model.index(model_index.row(), 0)
+        address = int(self.animation_proxy_model.data(addr_i), 16)
+
+        a: Animation = self.rom.animations[address]
+
+        images = []
+        for addr in a.addresses:
+            i = self.rom.images[addr]
+            i.decode()
+            images.append(i)
+
+        self.image = images[0]
+        self.update_image_label()
+
     def on_lut_select(self, index):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
@@ -349,6 +403,7 @@ class App(QWidget):
         self.update_image_label()
         self.populate_single_model()
         self.populate_comp_model()
+        self.populate_animation_model()
         self.initialized = True
 
     def changeEvent(self, event):
