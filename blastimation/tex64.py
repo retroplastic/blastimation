@@ -37,7 +37,18 @@ def parse_rgba16(data, width, height, flip_h=False, flip_v=False):
     img = bytearray()
 
     for x, y, i in iter_image_indexes(width, height, 2, 1, flip_h, flip_v):
-        img += bytes(unpack_color(data[i:]))
+        img += bytes(unpack_color(data[i:i + 2]))
+
+    return img
+
+
+def parse_rgba32(data, width, height, flip_h=False, flip_v=False):
+    if not flip_h and not flip_v:
+        return data
+
+    img = bytearray()
+    for x, y, i in iter_image_indexes(width, height, 4, 1, flip_h, flip_v):
+        img += data[i:i+4]
 
     return img
 

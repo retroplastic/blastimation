@@ -16,3 +16,5 @@ class Test(unittest.TestCase):
 
         for a in blast5_addrs:
             print(a)
+
+        print("len", len(blast5_addrs))

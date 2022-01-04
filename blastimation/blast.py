@@ -1,7 +1,7 @@
 import struct
 from enum import Enum
 
-from blastimation.tex64 import parse_rgba16, parse_ia8
+from blastimation.tex64 import parse_rgba16, parse_ia8, parse_rgba32
 
 
 class Blast(Enum):
@@ -22,6 +22,8 @@ def blast_parse_image(blast_type: Blast, data: bytes,
             return parse_rgba16(data, width, height, flip_h, flip_v)
         case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8):
             return parse_ia8(data, width, height, flip_h, flip_v)
+        case (Blast.BLAST2_RGBA32 | Blast.BLAST5_RGBA32):
+            return parse_rgba32(data, width, height, flip_h, flip_v)
         case _:
             return data
 
