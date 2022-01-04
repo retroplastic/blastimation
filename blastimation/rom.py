@@ -1,6 +1,7 @@
 import struct
 import ryaml
 
+from blastimation.anim import Animation
 from blastimation.blast import Blast, blast_get_lut_size
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
@@ -20,6 +21,7 @@ class Rom:
 
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
+        self.animations: dict[int:Animation] = {}
 
         if path.endswith(".yaml"):
             self.load_yaml(path)
@@ -127,6 +129,24 @@ class Rom:
                     self.in_comp.extend(addresses)
 
                     self.comps[c.start] = c
+
+        for blast_type_str, animation_list in composites_yaml["animations"].items():
+            blast_type = getattr(Blast, blast_type_str)
+            for animation in animation_list:
+                if isinstance(animation[-1], str):
+                    name = animation[-1]
+                    addresses = animation[:-1]
+                else:
+                    addresses = animation
+                    name = ""
+
+                a = Animation()
+                a.name = name
+                a.start = addresses[0]
+                a.addresses = addresses
+                a.blast = blast_type
+
+                self.animations[a.start] = a
 
     def print_stats(self):
         print("LUTs:")
