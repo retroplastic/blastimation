@@ -37,7 +37,7 @@ class App(QWidget):
         self.image = None
         self.animation = None
         self.animation_timer: QTimer = QTimer()
-        self.animation_timer.setInterval(500)
+        self.animation_timer.setInterval(100)
         self.animation_timer.timeout.connect(self.animate)
         self.animation_frame: int = 0
 
@@ -267,6 +267,9 @@ class App(QWidget):
         self.list_toggle_button.setToolTip(self.list_toggle_button_states[new_index][1])
 
     def on_single_select(self, model_index):
+        self.animation = None
+        self.animation_timer.stop()
+
         addr_i = self.single_proxy_model.index(model_index.row(), 0)
         addr_str = self.single_proxy_model.data(addr_i)
         if not addr_str:
@@ -297,6 +300,9 @@ class App(QWidget):
                 self.lut_auto_button.hide()
 
     def on_composite_select(self, model_index):
+        self.animation = None
+        self.animation_timer.stop()
+
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
         address = int(self.composite_proxy_model.data(addr_i), 16)
 
