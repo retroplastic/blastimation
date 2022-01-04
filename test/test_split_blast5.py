@@ -34,6 +34,16 @@ class Test(unittest.TestCase):
         for e in single_image_animation_elements:
             blast5_addrs.remove(e)
 
+        stuff_from_another_castle = [
+            0x224CE8, 0x224DC0, 0x224EB0, 0x224FB8,
+            0x225010, 0x2250B0, 0x225170, 0x225240,
+            0x225290, 0x225310, 0x2253C0, 0x225450,
+            0x2254A0, 0x225500, 0x225580
+        ]
+
+        for e in stuff_from_another_castle:
+            blast5_addrs.remove(e)
+
         chunk_size = 4
         chunked_list = [blast5_addrs[i:i + chunk_size] for i in range(0, len(blast5_addrs), chunk_size)]
 
