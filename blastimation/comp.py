@@ -14,10 +14,12 @@ class CompType(Enum):
 class Composite:
     def __init__(self):
         self.name: str = ""
-        self.start: int = 0x0
         self.addresses: list[int] = []
         self.blast: Blast = Blast.BLAST0
         self.type: CompType = CompType.Single
+
+    def start(self):
+        return self.addresses[0]
 
     def width(self, images):
         w = images[self.addresses[0]].width
@@ -56,7 +58,7 @@ class Composite:
 
     def model_data(self, images):
         return [
-            "0x%06X" % self.addresses[0],
+            "0x%06X" % self.start(),
             self.name,
             self.blast.name,
             blast_get_format_id(self.blast),

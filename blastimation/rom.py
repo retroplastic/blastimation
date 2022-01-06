@@ -137,14 +137,13 @@ class Rom:
 
                     c = Composite()
                     c.name = name
-                    c.start = addresses[0]
                     c.addresses = addresses
                     c.blast = blast_type
                     c.type = comp_type
 
                     self.in_comp.extend(addresses)
 
-                    self.comps[c.start] = c
+                    self.comps[c.start()] = c
 
         for blast_type_str, animation_list in composites_yaml["animations"].items():
             blast_type = getattr(Blast, blast_type_str)
@@ -159,11 +158,10 @@ class Rom:
                 a = Composite()
                 a.type = CompType.Animation
                 a.name = name
-                a.start = addresses[0]
                 a.addresses = addresses
                 a.blast = blast_type
 
-                self.animations[a.start] = a
+                self.animations[a.start()] = a
 
     def print_stats(self):
         print("LUTs:")
