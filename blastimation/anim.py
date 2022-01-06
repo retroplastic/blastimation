@@ -9,10 +9,10 @@ class Animation:
         self.blast: Blast = Blast.BLAST0
 
     def width(self, images):
-        return images[self.addresses[-1]].width
+        return images[self.addresses[0]].width
 
     def height(self, images):
-        return images[self.addresses[-1]].height
+        return images[self.addresses[0]].height
 
     def encoded_size(self, images):
         size = 0
