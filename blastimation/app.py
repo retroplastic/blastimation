@@ -42,7 +42,7 @@ class App(QWidget):
 
         self.single_model = self.make_single_model()
         self.composite_model = self.make_composite_model()
-        self.animation_model = self.make_animation_model()
+        self.animation_model = self.make_composite_model()
 
         self.list_toggle_button_states = [
             (self.style().standardIcon(QStyle.SP_FileDialogListView), "Grid view"),
@@ -88,21 +88,6 @@ class App(QWidget):
         m.setHeaderData(5, Qt.Horizontal, "Height")
         m.setHeaderData(6, Qt.Horizontal, "Size Enc")
         m.setHeaderData(7, Qt.Horizontal, "Size Dec")
-        return m
-
-    @staticmethod
-    def make_animation_model():
-        m = QStandardItemModel(0, 10)
-        m.setHeaderData(0, Qt.Horizontal, "Start")
-        m.setHeaderData(1, Qt.Horizontal, "Name")
-        m.setHeaderData(2, Qt.Horizontal, "Encoding")
-        m.setHeaderData(3, Qt.Horizontal, "Format")
-        m.setHeaderData(4, Qt.Horizontal, "Width")
-        m.setHeaderData(5, Qt.Horizontal, "Height")
-        m.setHeaderData(6, Qt.Horizontal, "Size Enc")
-        m.setHeaderData(7, Qt.Horizontal, "Size Dec")
-        m.setHeaderData(8, Qt.Horizontal, "Comp")
-        m.setHeaderData(9, Qt.Horizontal, "Frames")
         return m
 
     def populate_single_model(self):
