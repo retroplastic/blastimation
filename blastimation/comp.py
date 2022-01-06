@@ -4,9 +4,11 @@ from blastimation.blast import Blast, blast_get_format_id
 
 
 class CompType(Enum):
-    TopBottom = 0  # Top Bottom (Actually Bottom Top, as we flip)
-    RightLeft = 1  # Right Left
-    Quad = 2
+    Single = 0
+    TopBottom = 1
+    RightLeft = 2
+    Quad = 3
+    Animation = 4
 
 
 class Composite:
@@ -15,23 +17,23 @@ class Composite:
         self.start: int = 0x0
         self.addresses: list[int] = []
         self.blast: Blast = Blast.BLAST0
-        self.type: CompType = CompType.TopBottom
+        self.type: CompType = CompType.Single
 
     def width(self, images):
-        single_width = images[self.addresses[-1]].width
+        w = images[self.addresses[0]].width
         match self.type:
-            case CompType.TopBottom:
-                return single_width
             case (CompType.RightLeft | CompType.Quad):
-                return single_width * 2
+                return w * 2
+            case _:
+                return w
 
     def height(self, images):
-        single_height = images[self.addresses[-1]].height
+        h = images[self.addresses[0]].height
         match self.type:
-            case CompType.RightLeft:
-                return single_height
             case (CompType.TopBottom | CompType.Quad):
-                return single_height * 2
+                return h * 2
+            case _:
+                return h
 
     def encoded_size(self, images):
         size = 0
@@ -45,6 +47,13 @@ class Composite:
             size += images[a].decoded_size
         return size
 
+    def frames(self):
+        match self.type:
+            case CompType.Animation:
+                return len(self.addresses)
+            case _:
+                return 1
+
     def model_data(self, images):
         return [
             "0x%06X" % self.addresses[0],
@@ -56,4 +65,5 @@ class Composite:
             self.encoded_size(images),
             self.decoded_size(images),
             self.type.name,
+            self.frames()
         ]

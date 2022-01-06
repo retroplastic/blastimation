@@ -6,7 +6,6 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, Q
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
-from blastimation.anim import Animation
 from blastimation.comp import Composite
 from blastimation.image import BlastImage
 from blastimation.rom import Rom, CompType
@@ -93,7 +92,7 @@ class App(QWidget):
 
     @staticmethod
     def make_animation_model():
-        m = QStandardItemModel(0, 9)
+        m = QStandardItemModel(0, 10)
         m.setHeaderData(0, Qt.Horizontal, "Start")
         m.setHeaderData(1, Qt.Horizontal, "Name")
         m.setHeaderData(2, Qt.Horizontal, "Encoding")
@@ -102,7 +101,8 @@ class App(QWidget):
         m.setHeaderData(5, Qt.Horizontal, "Height")
         m.setHeaderData(6, Qt.Horizontal, "Size Enc")
         m.setHeaderData(7, Qt.Horizontal, "Size Dec")
-        m.setHeaderData(8, Qt.Horizontal, "Frames")
+        m.setHeaderData(8, Qt.Horizontal, "Comp")
+        m.setHeaderData(9, Qt.Horizontal, "Frames")
         return m
 
     def populate_single_model(self):
@@ -131,7 +131,7 @@ class App(QWidget):
 
     @staticmethod
     def make_composite_model():
-        m = QStandardItemModel(0, 9)
+        m = QStandardItemModel(0, 10)
         m.setHeaderData(0, Qt.Horizontal, "Start")
         m.setHeaderData(1, Qt.Horizontal, "Name")
         m.setHeaderData(2, Qt.Horizontal, "Encoding")
@@ -141,6 +141,7 @@ class App(QWidget):
         m.setHeaderData(6, Qt.Horizontal, "Size Enc")
         m.setHeaderData(7, Qt.Horizontal, "Size Dec")
         m.setHeaderData(8, Qt.Horizontal, "Comp")
+        m.setHeaderData(9, Qt.Horizontal, "Frames")
         return m
 
     def populate_comp_model(self):
@@ -348,7 +349,7 @@ class App(QWidget):
 
         painter.end()
 
-        self.image = BlastImage(c.blast, address, None, width, height)
+        self.image = BlastImage(c.blast, address, b"", width, height)
         self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
@@ -356,7 +357,7 @@ class App(QWidget):
         addr_i = self.animation_proxy_model.index(model_index.row(), 0)
         address = int(self.animation_proxy_model.data(addr_i), 16)
 
-        a: Animation = self.rom.animations[address]
+        a: Composite = self.rom.animations[address]
         self.animation = a
 
         images = []

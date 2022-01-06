@@ -1,7 +1,6 @@
 import struct
 import ryaml
 
-from blastimation.anim import Animation
 from blastimation.blast import Blast, blast_get_lut_size
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
@@ -22,7 +21,7 @@ class Rom:
 
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
-        self.animations: dict[int:Animation] = {}
+        self.animations: dict[int:Composite] = {}
 
         self.load_lut_overrides()
 
@@ -157,7 +156,8 @@ class Rom:
                     addresses = animation
                     name = ""
 
-                a = Animation()
+                a = Composite()
+                a.type = CompType.Animation
                 a.name = name
                 a.start = addresses[0]
                 a.addresses = addresses
