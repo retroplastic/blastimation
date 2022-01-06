@@ -21,7 +21,6 @@ class Rom:
 
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
-        self.animations: dict[int:Composite] = {}
 
         self.load_lut_overrides()
 
@@ -123,45 +122,24 @@ class Rom:
         with open("meta.yaml", "r") as f:
             composites_yaml = ryaml.load(f)
 
-        for blast_type_str, comp_types_dict in composites_yaml["composites"].items():
-            blast_type = getattr(Blast, blast_type_str)
-            for comp_type_str, comp_list in comp_types_dict.items():
-                comp_type = getattr(CompType, comp_type_str)
-                for comp in comp_list:
-                    if isinstance(comp[-1], str):
-                        name = comp[-1]
-                        addresses = comp[:-1]
-                    else:
-                        addresses = comp
-                        name = ""
-
-                    c = Composite()
-                    c.name = name
-                    c.addresses = addresses
-                    c.blast = blast_type
-                    c.type = comp_type
-
-                    self.in_comp.extend(addresses)
-
-                    self.comps[c.start()] = c
-
-        for blast_type_str, animation_list in composites_yaml["animations"].items():
-            blast_type = getattr(Blast, blast_type_str)
-            for animation in animation_list:
-                if isinstance(animation[-1], str):
-                    name = animation[-1]
-                    addresses = animation[:-1]
+        for comp_type_str, comp_list in composites_yaml["composites"].items():
+            comp_type = getattr(CompType, comp_type_str)
+            for comp in comp_list:
+                if isinstance(comp[-1], str):
+                    name = comp[-1]
+                    addresses = comp[:-1]
                 else:
-                    addresses = animation
+                    addresses = comp
                     name = ""
 
-                a = Composite()
-                a.type = CompType.Animation
-                a.name = name
-                a.addresses = addresses
-                a.blast = blast_type
+                c = Composite()
+                c.name = name
+                c.addresses = addresses
+                c.type = comp_type
 
-                self.animations[a.start()] = a
+                self.in_comp.extend(addresses)
+
+                self.comps[c.start()] = c
 
     def print_stats(self):
         print("LUTs:")

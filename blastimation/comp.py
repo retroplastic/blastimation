@@ -3,7 +3,7 @@ from enum import Enum
 from PySide6.QtCore import QPoint
 from PySide6.QtGui import QImage, QColor, QPainter, QPixmap
 
-from blastimation.blast import Blast, blast_get_format_id
+from blastimation.blast import blast_get_format_id
 from blastimation.image import BlastImage
 
 
@@ -19,14 +19,16 @@ class Composite:
     def __init__(self):
         self.name: str = ""
         self.addresses: list[int] = []
-        self.blast: Blast = Blast.BLAST0
         self.type: CompType = CompType.Single
+
+    def blast(self, images):
+        return images[self.start()].blast
 
     def start(self):
         return self.addresses[0]
 
     def width(self, images):
-        w = images[self.addresses[0]].width
+        w = images[self.start()].width
         match self.type:
             case (CompType.RightLeft | CompType.Quad):
                 return w * 2
@@ -34,7 +36,7 @@ class Composite:
                 return w
 
     def height(self, images):
-        h = images[self.addresses[0]].height
+        h = images[self.start()].height
         match self.type:
             case (CompType.TopBottom | CompType.Quad):
                 return h * 2
@@ -64,8 +66,8 @@ class Composite:
         return [
             "0x%06X" % self.start(),
             self.name,
-            self.blast.name,
-            blast_get_format_id(self.blast),
+            self.blast(images).name,
+            blast_get_format_id(self.blast(images)),
             self.width(images),
             self.height(images),
             self.encoded_size(images),
@@ -117,7 +119,7 @@ class Composite:
 
         painter.end()
 
-        image = BlastImage(self.blast, self.start(), b"", width, height)
+        image = BlastImage(self.blast(raw_images), self.start(), b"", width, height)
         image.pixmap = QPixmap.fromImage(composite_image)
 
         return image

@@ -6,7 +6,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
-from blastimation.comp import Composite
+from blastimation.comp import Composite, CompType
 from blastimation.rom import Rom
 from blastimation.blast import Blast, blast_get_lut_size
 
@@ -61,9 +61,6 @@ class App(QWidget):
         self.composite_view = QTreeView()
         self.composite_proxy_model = QSortFilterProxyModel()
         self.list_toggle_button = QToolButton()
-
-        self.animation_view = QTreeView()
-        self.animation_proxy_model = QSortFilterProxyModel()
 
         self.init_widgets()
 
@@ -137,15 +134,6 @@ class App(QWidget):
             for i in range(len(items)):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
-    def populate_animation_model(self):
-        for addr, animation in self.rom.animations.items():
-            last_row = self.animation_model.rowCount()
-            self.animation_model.insertRow(last_row)
-
-            items = animation.model_data(self.rom.images)
-            for i in range(len(items)):
-                self.animation_model.setData(self.animation_model.index(last_row, i), items[i])
-
     def init_luts(self):
         for lut_size in [128, 256]:
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
@@ -160,10 +148,6 @@ class App(QWidget):
         self.composite_proxy_model.setDynamicSortFilter(True)
         self.composite_proxy_model.setSourceModel(self.composite_model)
         self.composite_proxy_model.setFilterKeyColumn(2)
-
-        self.animation_proxy_model.setDynamicSortFilter(True)
-        self.animation_proxy_model.setSourceModel(self.animation_model)
-        self.animation_proxy_model.setFilterKeyColumn(2)
 
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -212,12 +196,6 @@ class App(QWidget):
         self.composite_view.selectionModel().currentChanged.connect(self.on_composite_select)
         self.composite_view.setSortingEnabled(True)
 
-        self.animation_view.setRootIsDecorated(False)
-        self.animation_view.setAlternatingRowColors(True)
-        self.animation_view.setModel(self.animation_proxy_model)
-        self.animation_view.selectionModel().currentChanged.connect(self.on_animation_select)
-        self.animation_view.setSortingEnabled(True)
-
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -225,8 +203,7 @@ class App(QWidget):
         self.single_stack_widget.addWidget(self.single_icon_view)
 
         tab_widget.addTab(self.single_stack_widget, "Single")
-        tab_widget.addTab(self.composite_view, "Multi")
-        tab_widget.addTab(self.animation_view, "Anim")
+        tab_widget.addTab(self.composite_view, "Comp")
 
         self.lut_auto_button.clicked.connect(self.on_auto_lut)
         self.lut_auto_button.hide()
@@ -293,29 +270,16 @@ class App(QWidget):
 
         c: Composite = self.rom.comps[address]
 
-        self.image = c.get_image(self.rom.images)
-
-        self.update_image_label()
-
-    def on_animation_select(self, model_index):
-        addr_i = self.animation_proxy_model.index(model_index.row(), 0)
-        address = int(self.animation_proxy_model.data(addr_i), 16)
-
-        a: Composite = self.rom.animations[address]
-        self.animation = a
-
-        images = []
-        for addr in a.addresses:
-            i = self.rom.images[addr]
-            i.decode()
-            images.append(i)
-
-        self.image = images[0]
-        self.update_image_label()
-
-        self.animation_frame = 0
-
-        self.animation_timer.start()
+        match c.type:
+            case CompType.Animation:
+                self.animation = c
+                self.image = self.rom.images[c.start()]
+                self.update_image_label()
+                self.animation_frame = 0
+                self.animation_timer.start()
+            case _:
+                self.image = c.get_image(self.rom.images)
+                self.update_image_label()
 
     def on_lut_select(self, index):
         match self.image.blast:
@@ -373,7 +337,6 @@ class App(QWidget):
         self.update_image_label()
         self.populate_single_model()
         self.populate_comp_model()
-        self.populate_animation_model()
         self.initialized = True
 
     def changeEvent(self, event):
