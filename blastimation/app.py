@@ -1,14 +1,13 @@
 import sys
 import threading
 
-from PySide6.QtCore import QRect, Qt, QPoint, QSortFilterProxyModel, QSize, QEvent, QTimer
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QImage, QPainter, QPixmap, QColor, QIcon
+from PySide6.QtCore import QRect, Qt, QSortFilterProxyModel, QSize, QEvent, QTimer
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
 from blastimation.comp import Composite
-from blastimation.image import BlastImage
-from blastimation.rom import Rom, CompType
+from blastimation.rom import Rom
 from blastimation.blast import Blast, blast_get_lut_size
 
 
@@ -294,48 +293,8 @@ class App(QWidget):
 
         c: Composite = self.rom.comps[address]
 
-        images = []
-        for addr in c.addresses:
-            i = self.rom.images[addr]
-            i.decode()
-            images.append(i)
+        self.image = c.get_image(self.rom.images)
 
-        match c.type:
-            case CompType.TopBottom:
-                width = images[0].width
-                height = images[0].height * 2
-            case CompType.RightLeft:
-                width = images[0].width * 2
-                height = images[0].height
-            case CompType.Quad:
-                width = images[0].width * 2
-                height = images[0].height * 2
-            case _:
-                width = 0
-                height = 0
-
-        composite_image = QImage(width, height, QImage.Format_ARGB32)
-        composite_image.fill(QColor(0, 0, 0, 0))
-
-        painter = QPainter(composite_image)
-
-        match c.type:
-            case CompType.TopBottom:
-                painter.drawImage(QPoint(0, 0), images[1].qimage)
-                painter.drawImage(QPoint(0, height/2), images[0].qimage)
-            case CompType.RightLeft:
-                painter.drawImage(QPoint(0, 0), images[1].qimage)
-                painter.drawImage(QPoint(width / 2, 0), images[0].qimage)
-            case CompType.Quad:
-                painter.drawImage(QPoint(0, 0), images[2].qimage)
-                painter.drawImage(QPoint(width / 2, 0), images[3].qimage)
-                painter.drawImage(QPoint(0, height / 2), images[0].qimage)
-                painter.drawImage(QPoint(width / 2, height / 2), images[1].qimage)
-
-        painter.end()
-
-        self.image = BlastImage(c.blast, address, b"", width, height)
-        self.image.pixmap = QPixmap.fromImage(composite_image)
         self.update_image_label()
 
     def on_animation_select(self, model_index):
