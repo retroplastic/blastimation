@@ -13,6 +13,7 @@ class CompType(Enum):
     RightLeft = 2
     Quad = 3
     Animation = 4
+    AnimationComp = 5
 
 
 class Composite:
