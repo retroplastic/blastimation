@@ -159,10 +159,11 @@ class Rom:
                 self.comps[animation_comp.start()] = animation_comp
 
                 # Fix LUTs
-                first_lut = self.images[animation_comp.start()].lut
-                for comp in animation_comp.comps:
-                    for addr in comp.addresses:
-                        self.images[addr].lut = first_lut
+                if animation_comp.start() in [0x1D0DF8, 0x281C90]:
+                    first_lut = self.images[animation_comp.start()].lut
+                    for comp in animation_comp.comps:
+                        for addr in comp.addresses:
+                            self.images[addr].lut = first_lut
 
     def print_stats(self):
         print("LUTs:")
