@@ -5134,7 +5134,7 @@ segments:
   - [0x2D438A] # 6 bytes
   - [0x2D4390, blast, 2D4390.blast1, 1, 32, 64]
   - [0x2D4954] # 4 bytes
-  - [0x2D4958, blast, 2D4958.blast1, 1, 32, 34]
+  - [0x2D4958, blast, 2D4958.blast1, 1, 32, 34] # Broken
   - [0x2D4DB6] # 2 bytes
   - [0x2D4DB8, blast, 2D4DB8.blast1, 1, 32, 32]
   - [0x2D5482] # 6 bytes
