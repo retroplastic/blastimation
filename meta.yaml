@@ -24,6 +24,7 @@ composites:
     - [0x2BCFE0, 0x2BD7E0, Stones1]
     - [0x32E570, 0x32E718, Question mark]
     - [0x32EEF0, 0x32F4F8, Lighthouse]
+    - [0x1F0BD8, 0x1F11F0]
   RightLeft:
     - [0x0D0288, 0x0D4410]
     - [0x0F25B8, 0x0F27A8]
