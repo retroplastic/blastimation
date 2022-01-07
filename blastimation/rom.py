@@ -164,14 +164,3 @@ class Rom:
                     for comp in animation_comp.comps:
                         for addr in comp.addresses:
                             self.images[addr].lut = first_lut
-
-    def print_stats(self):
-        print("LUTs:")
-        for lut_size, lut_dict in self.luts.items():
-            print(f"  {lut_size} ({len(lut_dict)}):")
-            for addr in lut_dict.keys():
-                print("    ", addr)
-
-        print("Blasts:")
-        for blast_id, blast_dict in self.images.items():
-            print(f"  {Blast(blast_id)} ({len(blast_dict)})")
