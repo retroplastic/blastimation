@@ -2,7 +2,7 @@ import struct
 import ryaml
 
 from blastimation.animation_comp import AnimationComp
-from blastimation.blast import Blast, blast_get_lut_size
+from blastimation.blast import Blast, blast_get_lut_size, blast_has_lut
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
 
@@ -74,17 +74,10 @@ class Rom:
                 self.luts[size][address] = data
             elif s["type"] == "blast":
                 self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
-                self.images[address].lut = self.determine_lut(s["blast"])
+                if blast_has_lut(s["blast"]):
+                    self.images[address].lut = self.get_last_lut(s["blast"])
 
-    def determine_lut(self, blast: Blast) -> int:
-        # Check for lut type
-        match blast:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                pass
-            case _:
-                return 0
-
-        # Return last
+    def get_last_lut(self, blast: Blast) -> int:
         lut_size = blast_get_lut_size(blast)
         lut_keys = list(self.luts[lut_size].keys())
         lut_keys.sort()
@@ -114,7 +107,8 @@ class Rom:
                     continue
 
                 self.images[address] = BlastImage(blast_type, address, encoded_bytes)
-                self.images[address].lut = self.determine_lut(blast_type)
+                if blast_has_lut(blast_type):
+                    self.images[address].lut = self.get_last_lut(blast_type)
 
     def init_composite_images(self):
         with open("meta.yaml", "r") as f:

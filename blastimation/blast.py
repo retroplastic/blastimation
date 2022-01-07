@@ -36,12 +36,12 @@ def blast_get_lut_size(blast_type: Blast):
             return 256
 
 
+def blast_has_lut(blast_type: Blast) -> bool:
+    return blast_type in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
+
+
 def blast_is_grayscale(blast_type: Blast) -> bool:
-    match blast_type:
-        case (Blast.BLAST3_IA8 | Blast.BLAST6_IA8 | Blast.BLAST4_IA16):
-            return True
-        case _:
-            return False
+    return blast_type in [Blast.BLAST3_IA8, Blast.BLAST6_IA8, Blast.BLAST4_IA16]
 
 
 def blast_get_depth(blast_type: Blast) -> int:
