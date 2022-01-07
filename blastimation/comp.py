@@ -5,6 +5,7 @@ from PySide6.QtGui import QImage, QColor, QPainter, QPixmap
 
 from blastimation.blast import blast_get_format_id
 from blastimation.image import BlastImage
+from blastimation.rom import rom
 
 
 class CompType(Enum):
@@ -22,38 +23,38 @@ class Composite:
         self.addresses: list[int] = []
         self.type: CompType = CompType.Single
 
-    def blast(self, images):
-        return images[self.start()].blast
+    def blast(self):
+        return rom.images[self.start()].blast
 
     def start(self):
         return self.addresses[0]
 
-    def width(self, images):
-        w = images[self.start()].width
+    def width(self):
+        w = rom.images[self.start()].width
         match self.type:
             case (CompType.RightLeft | CompType.Quad):
                 return w * 2
             case _:
                 return w
 
-    def height(self, images):
-        h = images[self.start()].height
+    def height(self):
+        h = rom.images[self.start()].height
         match self.type:
             case (CompType.TopBottom | CompType.Quad):
                 return h * 2
             case _:
                 return h
 
-    def encoded_size(self, images):
+    def encoded_size(self):
         size = 0
         for a in self.addresses:
-            size += images[a].encoded_size
+            size += rom.images[a].encoded_size
         return size
 
-    def decoded_size(self, images):
+    def decoded_size(self):
         size = 0
         for a in self.addresses:
-            size += images[a].decoded_size
+            size += rom.images[a].decoded_size
         return size
 
     def frames(self):
@@ -63,26 +64,26 @@ class Composite:
             case _:
                 return 1
 
-    def model_data(self, images):
+    def model_data(self):
         return [
             "0x%06X" % self.start(),
             self.name,
-            self.blast(images).name,
-            blast_get_format_id(self.blast(images)),
-            self.width(images),
-            self.height(images),
-            self.encoded_size(images),
-            self.decoded_size(images),
+            self.blast().name,
+            blast_get_format_id(self.blast()),
+            self.width(),
+            self.height(),
+            self.encoded_size(),
+            self.decoded_size(),
             self.type.name,
             self.frames()
         ]
 
-    def get_image(self, raw_images: dict[int, BlastImage]) -> BlastImage:
+    def get_image(self) -> BlastImage:
         assert self.type in [CompType.TopBottom, CompType.RightLeft, CompType.Quad]
 
         images = []
         for addr in self.addresses:
-            i = raw_images[addr]
+            i = rom.images[addr]
             i.decode()
             images.append(i)
 
@@ -120,7 +121,7 @@ class Composite:
 
         painter.end()
 
-        image = BlastImage(self.blast(raw_images), self.start(), b"", width, height)
+        image = BlastImage(self.blast(), self.start(), b"", width, height)
         image.pixmap = QPixmap.fromImage(composite_image)
 
         return image

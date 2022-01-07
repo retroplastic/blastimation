@@ -73,7 +73,7 @@ class App(QWidget):
                 self.image = rom.images[frame_addr]
                 self.image.decode()
             case CompType.AnimationComp:
-                self.image = self.animation.comps[self.animation_frame].get_image(rom.images)
+                self.image = self.animation.comps[self.animation_frame].get_image()
 
         self.update_image_label()
 
@@ -136,7 +136,7 @@ class App(QWidget):
             last_row = self.composite_model.rowCount()
             self.composite_model.insertRow(last_row)
 
-            items = comp.model_data(rom.images)
+            items = comp.model_data()
             for i in range(len(items)):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
@@ -280,12 +280,12 @@ class App(QWidget):
                 self.animation_timer.start()
             case CompType.AnimationComp:
                 self.animation = c
-                self.image = c.comps[0].get_image(rom.images)
+                self.image = c.comps[0].get_image()
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
             case _:
-                self.image = c.get_image(rom.images)
+                self.image = c.get_image()
                 self.update_image_label()
 
     def on_lut_select(self, index):

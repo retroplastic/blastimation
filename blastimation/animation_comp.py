@@ -8,43 +8,43 @@ class AnimationComp:
         self.comps: list[Composite] = []
         self.type = CompType.AnimationComp
 
-    def blast(self, images):
-        return self.comps[0].blast(images)
+    def blast(self):
+        return self.comps[0].blast()
 
     def start(self):
         return self.comps[0].start()
 
-    def width(self, images):
-        return self.comps[0].width(images)
+    def width(self):
+        return self.comps[0].width()
 
-    def height(self, images):
-        return self.comps[0].height(images)
+    def height(self):
+        return self.comps[0].height()
 
-    def encoded_size(self, images):
+    def encoded_size(self):
         size = 0
         for c in self.comps:
-            size += c.encoded_size(images)
+            size += c.encoded_size()
         return size
 
-    def decoded_size(self, images):
+    def decoded_size(self):
         size = 0
         for c in self.comps:
-            size += c.decoded_size(images)
+            size += c.decoded_size()
         return size
 
     def frames(self):
         return len(self.comps)
 
-    def model_data(self, images):
+    def model_data(self):
         return [
             "0x%06X" % self.start(),
             self.name,
-            self.blast(images).name,
-            blast_get_format_id(self.blast(images)),
-            self.width(images),
-            self.height(images),
-            self.encoded_size(images),
-            self.decoded_size(images),
+            self.blast().name,
+            blast_get_format_id(self.blast()),
+            self.width(),
+            self.height(),
+            self.encoded_size(),
+            self.decoded_size(),
             self.type.name,
             self.frames()
         ]
