@@ -98,13 +98,7 @@ class App(QWidget):
             if addr in self.rom.in_comp:
                 continue
 
-            match image.blast:
-                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                    lut_size = blast_get_lut_size(image.blast)
-                    lut = luts[lut_size][image.lut]
-                    image.decode_lut(lut)
-                case _:
-                    image.decode()
+            image.decode()
 
             last_row = self.single_model.rowCount()
             self.single_model.insertRow(last_row)
@@ -249,13 +243,7 @@ class App(QWidget):
         addr = int(addr_str, 16)
 
         self.image = self.rom.images[addr]
-        match self.image.blast:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.image.blast)
-                lut = luts[lut_size][self.image.lut]
-                self.image.decode_lut(lut)
-            case _:
-                self.image.decode()
+        self.image.decode()
 
         self.update_image_label()
 
@@ -302,8 +290,7 @@ class App(QWidget):
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
                 self.image.lut = int(self.lut_models[lut_size].item(index).text(), 16)
-                lut = luts[lut_size][self.image.lut]
-                self.image.decode_lut(lut)
+                self.image.decode()
                 self.update_image_label()
 
     def on_blast_filter_changed(self, index):

@@ -1,7 +1,8 @@
 from PySide6.QtGui import QImage, QPixmap
 
 from blastimation.blast import Blast, blast_guess_resolution, blast_parse_image, decode_blast, decode_blast_lookup, \
-    blast_get_format_id
+    blast_get_format_id, blast_get_lut_size
+from blastimation.lut import luts
 
 
 class BlastImage:
@@ -41,20 +42,13 @@ class BlastImage:
             return
 
         assert self.encoded
-        assert self.blast not in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
-        decoded = decode_blast(self.blast, self.encoded)
 
-        self.decoded_size = len(decoded)
-
-        if not self.width or not self.height:
-            self.guess_resolution(decoded)
-        raw = self.parse(decoded)
-        self.generate_pixmap(raw)
-
-    def decode_lut(self, lut: bytes):
-        assert self.encoded
-        assert self.blast in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
-        decoded = decode_blast_lookup(self.blast, self.encoded, lut)
+        match self.blast:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(self.blast)
+                decoded = decode_blast_lookup(self.blast, self.encoded, luts[lut_size][self.lut])
+            case _:
+                decoded = decode_blast(self.blast, self.encoded)
 
         self.decoded_size = len(decoded)
 
