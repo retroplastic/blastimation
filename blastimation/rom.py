@@ -135,6 +135,12 @@ class Rom:
                 self.in_comp.extend(c.addresses)
                 self.comps[c.start()] = c
 
+                # Fix LUTs
+                if c.start() in [0x0999E0]:
+                    first_lut = self.images[c.start()].lut
+                    for addr in c.addresses:
+                        self.images[addr].lut = first_lut
+
         for comp_type_str, animations_dict in composites_yaml["composite_animations"].items():
             comp_type = getattr(CompType, comp_type_str)
             for animation_name, comps_list in animations_dict.items():
