@@ -93,6 +93,10 @@ class App(QWidget):
 
     def populate_single_model(self):
         for addr, image in self.rom.images.items():
+
+            if addr in self.rom.in_comp:
+                continue
+
             match image.blast:
                 case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                     lut_size = blast_get_lut_size(image.blast)
