@@ -1,9 +1,7 @@
 import struct
 import ryaml
 
-from blastimation.animation_comp import AnimationComp
 from blastimation.blast import Blast, blast_has_lut
-from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
 from blastimation.lut import luts, get_last_lut
 
@@ -12,18 +10,14 @@ END_OFFSET = 0xCCE0
 
 
 class Rom:
-    def __init__(self, path: str):
-        self.in_comp: list[int] = []
-
+    def __init__(self):
         self.images: dict[int:BlastImage] = {}
-        self.comps: dict[int:Composite] = {}
 
+    def load(self, path: str):
         if path.endswith(".yaml"):
             self.load_yaml(path)
         else:
             self.load_rom(path)
-
-        self.init_composite_images()
 
     def load_yaml(self, yaml_path: str):
         with open(yaml_path, "r") as f:
@@ -99,51 +93,5 @@ class Rom:
                 if blast_has_lut(blast_type):
                     self.images[address].lut = get_last_lut(blast_type)
 
-    def init_composite_images(self):
-        with open("meta.yaml", "r") as f:
-            composites_yaml = ryaml.load(f)
 
-        for comp_type_str, comp_list in composites_yaml["composites"].items():
-            comp_type = getattr(CompType, comp_type_str)
-            for addresses in comp_list:
-                c = Composite()
-                c.type = comp_type
-                if isinstance(addresses[-1], str):
-                    c.name = addresses[-1]
-                    c.addresses = addresses[:-1]
-                else:
-                    c.addresses = addresses
-                    c.name = ""
-
-                self.in_comp.extend(c.addresses)
-                self.comps[c.start()] = c
-
-                # Fix LUTs
-                if c.start() in [0x0999E0]:
-                    first_lut = self.images[c.start()].lut
-                    for addr in c.addresses:
-                        self.images[addr].lut = first_lut
-
-        for comp_type_str, animations_dict in composites_yaml["composite_animations"].items():
-            comp_type = getattr(CompType, comp_type_str)
-            for animation_name, comps_list in animations_dict.items():
-                animation_comp = AnimationComp()
-                animation_comp.name = animation_name
-                i = 0
-                for addresses in comps_list:
-                    c = Composite()
-                    c.name = f"{animation_name}.{i}"
-                    i += 1
-                    c.addresses = addresses
-                    c.type = comp_type
-
-                    self.in_comp.extend(c.addresses)
-                    animation_comp.comps.append(c)
-                self.comps[animation_comp.start()] = animation_comp
-
-                # Fix LUTs
-                if animation_comp.start() in [0x1D0DF8, 0x281C90]:
-                    first_lut = self.images[animation_comp.start()].lut
-                    for comp in animation_comp.comps:
-                        for addr in comp.addresses:
-                            self.images[addr].lut = first_lut
+rom = Rom()

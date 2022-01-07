@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
 
 from blastimation.comp import CompType
 from blastimation.lut import luts
-from blastimation.rom import Rom
+from blastimation.meta import Meta
+from blastimation.rom import rom
 from blastimation.blast import Blast, blast_get_lut_size
 
 
@@ -31,8 +32,8 @@ class App(QWidget):
         self.initialized = False
 
         self.lut_models = {}
+        self.meta = None
 
-        self.rom = None
         self.image = None
         self.animation = None
         self.animation_timer: QTimer = QTimer()
@@ -69,9 +70,10 @@ class App(QWidget):
         match self.animation.type:
             case CompType.Animation:
                 frame_addr = self.animation.addresses[self.animation_frame]
-                self.image = self.rom.images[frame_addr]
+                self.image = rom.images[frame_addr]
+                self.image.decode()
             case CompType.AnimationComp:
-                self.image = self.animation.comps[self.animation_frame].get_image(self.rom.images)
+                self.image = self.animation.comps[self.animation_frame].get_image(rom.images)
 
         self.update_image_label()
 
@@ -93,9 +95,9 @@ class App(QWidget):
         return m
 
     def populate_single_model(self):
-        for addr, image in self.rom.images.items():
+        for addr, image in rom.images.items():
 
-            if addr in self.rom.in_comp:
+            if addr in self.meta.in_comp:
                 continue
 
             image.decode()
@@ -130,11 +132,11 @@ class App(QWidget):
         return m
 
     def populate_comp_model(self):
-        for addr, comp in self.rom.comps.items():
+        for addr, comp in self.meta.comps.items():
             last_row = self.composite_model.rowCount()
             self.composite_model.insertRow(last_row)
 
-            items = comp.model_data(self.rom.images)
+            items = comp.model_data(rom.images)
             for i in range(len(items)):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
@@ -242,7 +244,7 @@ class App(QWidget):
             return
         addr = int(addr_str, 16)
 
-        self.image = self.rom.images[addr]
+        self.image = rom.images[addr]
         self.image.decode()
 
         self.update_image_label()
@@ -266,23 +268,24 @@ class App(QWidget):
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
         address = int(self.composite_proxy_model.data(addr_i), 16)
 
-        c = self.rom.comps[address]
+        c = self.meta.comps[address]
 
         match c.type:
             case CompType.Animation:
                 self.animation = c
-                self.image = self.rom.images[c.start()]
+                self.image = rom.images[c.start()]
+                self.image.decode()
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
             case CompType.AnimationComp:
                 self.animation = c
-                self.image = c.comps[0].get_image(self.rom.images)
+                self.image = c.comps[0].get_image(rom.images)
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
             case _:
-                self.image = c.get_image(self.rom.images)
+                self.image = c.get_image(rom.images)
                 self.update_image_label()
 
     def on_lut_select(self, index):
@@ -333,9 +336,10 @@ class App(QWidget):
             self.update_image_label()
 
     def post_initialize(self):
-        self.rom = Rom(sys.argv[1])
+        rom.load(sys.argv[1])
+        self.meta = Meta()
         self.init_luts()
-        self.image = list(self.rom.images.values())[0]
+        self.image = list(rom.images.values())[0]
         self.image.decode()
         self.update_image_label()
         self.populate_single_model()
