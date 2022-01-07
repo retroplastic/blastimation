@@ -277,6 +277,8 @@ class App(QWidget):
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
+            case CompType.AnimationComp:
+                pass
             case _:
                 self.image = c.get_image(self.rom.images)
                 self.update_image_label()
