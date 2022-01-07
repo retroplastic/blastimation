@@ -1,6 +1,7 @@
 import struct
 import ryaml
 
+from blastimation.animation_comp import AnimationComp
 from blastimation.blast import Blast, blast_get_lut_size
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
@@ -138,22 +139,35 @@ class Rom:
 
         for comp_type_str, comp_list in composites_yaml["composites"].items():
             comp_type = getattr(CompType, comp_type_str)
-            for comp in comp_list:
-                if isinstance(comp[-1], str):
-                    name = comp[-1]
-                    addresses = comp[:-1]
-                else:
-                    addresses = comp
-                    name = ""
-
+            for addresses in comp_list:
                 c = Composite()
-                c.name = name
-                c.addresses = addresses
                 c.type = comp_type
+                if isinstance(addresses[-1], str):
+                    c.name = addresses[-1]
+                    c.addresses = addresses[:-1]
+                else:
+                    c.addresses = addresses
+                    c.name = ""
 
-                self.in_comp.extend(addresses)
-
+                self.in_comp.extend(c.addresses)
                 self.comps[c.start()] = c
+
+        for comp_type_str, animations_dict in composites_yaml["composite_animations"].items():
+            comp_type = getattr(CompType, comp_type_str)
+            for animation_name, comps_list in animations_dict.items():
+                animation_comp = AnimationComp()
+                animation_comp.name = animation_name
+                i = 0
+                for addresses in comps_list:
+                    c = Composite()
+                    c.name = f"{animation_name}.{i}"
+                    i += 1
+                    c.addresses = addresses
+                    c.type = comp_type
+
+                    self.in_comp.extend(c.addresses)
+                    animation_comp.comps.append(c)
+                self.comps[animation_comp.start()] = animation_comp
 
     def print_stats(self):
         print("LUTs:")
