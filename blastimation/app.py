@@ -6,7 +6,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget, \
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
-from blastimation.comp import Composite, CompType
+from blastimation.comp import CompType
 from blastimation.rom import Rom
 from blastimation.blast import Blast, blast_get_lut_size
 
@@ -65,8 +65,13 @@ class App(QWidget):
         self.init_widgets()
 
     def animate(self):
-        frame_addr = self.animation.addresses[self.animation_frame]
-        self.image = self.rom.images[frame_addr]
+        match self.animation.type:
+            case CompType.Animation:
+                frame_addr = self.animation.addresses[self.animation_frame]
+                self.image = self.rom.images[frame_addr]
+            case CompType.AnimationComp:
+                self.image = self.animation.comps[self.animation_frame].get_image(self.rom.images)
+
         self.update_image_label()
 
         self.animation_frame += 1
@@ -268,7 +273,7 @@ class App(QWidget):
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
         address = int(self.composite_proxy_model.data(addr_i), 16)
 
-        c: Composite = self.rom.comps[address]
+        c = self.rom.comps[address]
 
         match c.type:
             case CompType.Animation:
@@ -278,7 +283,11 @@ class App(QWidget):
                 self.animation_frame = 0
                 self.animation_timer.start()
             case CompType.AnimationComp:
-                pass
+                self.animation = c
+                self.image = c.comps[0].get_image(self.rom.images)
+                self.update_image_label()
+                self.animation_frame = 0
+                self.animation_timer.start()
             case _:
                 self.image = c.get_image(self.rom.images)
                 self.update_image_label()
