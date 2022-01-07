@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVB
     QListView, QComboBox, QTabWidget, QTreeView, QToolButton, QStyle, QStackedWidget
 
 from blastimation.comp import CompType
+from blastimation.lut import luts
 from blastimation.rom import Rom
 from blastimation.blast import Blast, blast_get_lut_size
 
@@ -100,7 +101,7 @@ class App(QWidget):
             match image.blast:
                 case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                     lut_size = blast_get_lut_size(image.blast)
-                    lut = self.rom.luts[lut_size][image.lut]
+                    lut = luts[lut_size][image.lut]
                     image.decode_lut(lut)
                 case _:
                     image.decode()
@@ -146,7 +147,7 @@ class App(QWidget):
     def init_luts(self):
         for lut_size in [128, 256]:
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
-            for k in self.rom.luts[lut_size].keys():
+            for k in luts[lut_size].keys():
                 self.lut_models[lut_size].appendRow(QStandardItem("%06X" % k))
 
     def init_widgets(self):
@@ -251,7 +252,7 @@ class App(QWidget):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
-                lut = self.rom.luts[lut_size][self.image.lut]
+                lut = luts[lut_size][self.image.lut]
                 self.image.decode_lut(lut)
             case _:
                 self.image.decode()
@@ -264,7 +265,7 @@ class App(QWidget):
                 self.lut_combo_box.setModel(self.lut_models[lut_size])
                 self.lut_combo_box.show()
                 self.lut_auto_button.show()
-                lut_index = list(self.rom.luts[lut_size].keys()).index(self.image.lut)
+                lut_index = list(luts[lut_size].keys()).index(self.image.lut)
                 self.lut_combo_box.setCurrentIndex(lut_index)
             case _:
                 self.lut_combo_box.hide()
@@ -301,7 +302,7 @@ class App(QWidget):
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
                 self.image.lut = int(self.lut_models[lut_size].item(index).text(), 16)
-                lut = self.rom.luts[lut_size][self.image.lut]
+                lut = luts[lut_size][self.image.lut]
                 self.image.decode_lut(lut)
                 self.update_image_label()
 
@@ -321,7 +322,7 @@ class App(QWidget):
                 lut_size = blast_get_lut_size(self.image.blast)
 
                 last_k = 0
-                lut_keys = list(self.rom.luts[lut_size].keys())
+                lut_keys = list(luts[lut_size].keys())
                 lut_keys.sort()
 
                 row = -1

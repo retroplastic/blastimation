@@ -2,9 +2,10 @@ import struct
 import ryaml
 
 from blastimation.animation_comp import AnimationComp
-from blastimation.blast import Blast, blast_get_lut_size, blast_has_lut
+from blastimation.blast import Blast, blast_has_lut
 from blastimation.comp import CompType, Composite
 from blastimation.image import BlastImage
+from blastimation.lut import luts, get_last_lut
 
 ROM_OFFSET = 0x4CE0
 END_OFFSET = 0xCCE0
@@ -12,12 +13,6 @@ END_OFFSET = 0xCCE0
 
 class Rom:
     def __init__(self, path: str):
-        self.luts = {
-            128: {},
-            256: {}
-        }
-
-        self.lut_overrides: dict[int, list[int]] = {}
         self.in_comp: list[int] = []
 
         self.images: dict[int:BlastImage] = {}
@@ -71,17 +66,11 @@ class Rom:
             data: bytes = rom_bytes[address:s["end"]]
             if s["type"] == "lut":
                 size = (s["end"] - s["start"])
-                self.luts[size][address] = data
+                luts[size][address] = data
             elif s["type"] == "blast":
                 self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
                 if blast_has_lut(s["blast"]):
-                    self.images[address].lut = self.get_last_lut(s["blast"])
-
-    def get_last_lut(self, blast: Blast) -> int:
-        lut_size = blast_get_lut_size(blast)
-        lut_keys = list(self.luts[lut_size].keys())
-        lut_keys.sort()
-        return lut_keys[-1]
+                    self.images[address].lut = get_last_lut(s["blast"])
 
     def load_rom(self, rom_path: str):
         print("Loading directly from ROM...")
@@ -103,12 +92,12 @@ class Rom:
 
                 if blast_type == Blast.BLAST0:
                     if size in [128, 256]:
-                        self.luts[size][address] = encoded_bytes
+                        luts[size][address] = encoded_bytes
                     continue
 
                 self.images[address] = BlastImage(blast_type, address, encoded_bytes)
                 if blast_has_lut(blast_type):
-                    self.images[address].lut = self.get_last_lut(blast_type)
+                    self.images[address].lut = get_last_lut(blast_type)
 
     def init_composite_images(self):
         with open("meta.yaml", "r") as f:
