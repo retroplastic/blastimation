@@ -107,6 +107,8 @@ class Rom:
         return lut_keys[-1]
 
     def load_rom(self, rom_path: str):
+        print("Loading directly from ROM...")
+        print("WARNING: Resolutions will be broken! You need to load the yaml.")
         with open(rom_path, "rb") as f:
             rom_bytes = f.read()
 
@@ -128,6 +130,7 @@ class Rom:
                     continue
 
                 self.images[address] = BlastImage(blast_type, address, encoded_bytes)
+                self.images[address].lut = self.determine_lut(address, blast_type)
 
     def init_composite_images(self):
         with open("meta.yaml", "r") as f:
