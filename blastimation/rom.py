@@ -85,15 +85,26 @@ class Rom:
                 self.luts[size][address] = data
             elif s["type"] == "blast":
                 self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
-                lut_size = blast_get_lut_size(s["blast"])
-                if lut_size:
-                    lut_keys = list(self.luts[lut_size].keys())
-                    lut_keys.sort()
-                    self.images[address].lut = lut_keys[-1]
+                self.images[address].lut = self.determine_lut(address, s["blast"])
 
-                    for lut, addresses in self.lut_overrides.items():
-                        if address in addresses:
-                            self.images[address].lut = lut
+    def determine_lut(self, address: int, blast: Blast) -> int:
+        # Check for lut type
+        match blast:
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                pass
+            case _:
+                return 0
+
+        # Check if we have overrides (todo: remove this)
+        for lut, addresses in self.lut_overrides.items():
+            if address in addresses:
+                return lut
+
+        # Return last
+        lut_size = blast_get_lut_size(blast)
+        lut_keys = list(self.luts[lut_size].keys())
+        lut_keys.sort()
+        return lut_keys[-1]
 
     def load_rom(self, rom_path: str):
         with open(rom_path, "rb") as f:
