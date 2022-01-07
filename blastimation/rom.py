@@ -23,24 +23,12 @@ class Rom:
         self.images: dict[int:BlastImage] = {}
         self.comps: dict[int:Composite] = {}
 
-        self.load_lut_overrides()
-
         if path.endswith(".yaml"):
             self.load_yaml(path)
         else:
             self.load_rom(path)
 
         self.init_composite_images()
-
-    def load_lut_overrides(self):
-        with open("lut_overrides.yaml", "r") as f:
-            y = ryaml.load(f)
-
-        for lut, lists in y.items():
-            if lut not in self.lut_overrides:
-                self.lut_overrides[lut] = []
-            for li in lists:
-                self.lut_overrides[lut].extend(li)
 
     def load_yaml(self, yaml_path: str):
         with open(yaml_path, "r") as f:
@@ -86,20 +74,15 @@ class Rom:
                 self.luts[size][address] = data
             elif s["type"] == "blast":
                 self.images[address] = BlastImage(s["blast"], address, data, s["width"], s["height"])
-                self.images[address].lut = self.determine_lut(address, s["blast"])
+                self.images[address].lut = self.determine_lut(s["blast"])
 
-    def determine_lut(self, address: int, blast: Blast) -> int:
+    def determine_lut(self, blast: Blast) -> int:
         # Check for lut type
         match blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 pass
             case _:
                 return 0
-
-        # Check if we have overrides (todo: remove this)
-        for lut, addresses in self.lut_overrides.items():
-            if address in addresses:
-                return lut
 
         # Return last
         lut_size = blast_get_lut_size(blast)
@@ -131,7 +114,7 @@ class Rom:
                     continue
 
                 self.images[address] = BlastImage(blast_type, address, encoded_bytes)
-                self.images[address].lut = self.determine_lut(address, blast_type)
+                self.images[address].lut = self.determine_lut(blast_type)
 
     def init_composite_images(self):
         with open("meta.yaml", "r") as f:
@@ -168,6 +151,12 @@ class Rom:
                     self.in_comp.extend(c.addresses)
                     animation_comp.comps.append(c)
                 self.comps[animation_comp.start()] = animation_comp
+
+                # Fix LUTs
+                first_lut = self.images[animation_comp.start()].lut
+                for comp in animation_comp.comps:
+                    for addr in comp.addresses:
+                        self.images[addr].lut = first_lut
 
     def print_stats(self):
         print("LUTs:")
