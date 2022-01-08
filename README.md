@@ -17,6 +17,12 @@ pip install -r requirements.txt
 python -m blastimation
 ```
 
+## Run commands
+
+```bash
+python -m blastimation.commands.list_sequence 0x21BF48 0x2237E8
+```
+
 ## Run tests
 
 ```bash
