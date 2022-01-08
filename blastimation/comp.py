@@ -90,7 +90,14 @@ class Composite:
             rom.images[a].lut = lut
             rom.images[a].decode(force=True)
 
-    def get_image(self) -> BlastImage:
+    def get_image(self):
+        match self.type:
+            case (CompType.TopBottom | CompType.RightLeft | CompType.Quad):
+                return self.get_comp_image()
+            case _:
+                return rom.images[self.start()]
+
+    def get_comp_image(self) -> BlastImage:
         assert self.type in [CompType.TopBottom, CompType.RightLeft, CompType.Quad]
 
         images = []

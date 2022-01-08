@@ -42,6 +42,9 @@ class AnimationComp:
         for c in self.comps:
             c.set_lut(lut)
 
+    def get_image(self):
+        return self.comps[0].get_image()
+
     def model_data(self):
         return [
             "0x%06X" % self.start(),

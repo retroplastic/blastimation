@@ -141,6 +141,16 @@ class App(QWidget):
             for i in range(len(items)):
                 self.composite_model.setData(self.composite_model.index(last_row, i), items[i])
 
+            image = comp.get_image()
+            image.decode()
+            # Update icon
+            icon = QIcon(image.pixmap.scaled(
+                QSize(128, 128),
+                Qt.KeepAspectRatio,
+                Qt.FastTransformation,
+            ))
+            self.composite_model.item(last_row).setIcon(icon)
+
     def init_luts(self):
         for lut_size in [128, 256]:
             self.lut_models[lut_size] = QStandardItemModel(0, 1)
