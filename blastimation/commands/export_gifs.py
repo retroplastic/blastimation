@@ -23,6 +23,16 @@ img2webp_path = shutil.which("img2webp")
 if img2webp_path:
     do_webp = True
     os.makedirs("export/webp", exist_ok=True)
+else:
+    print("If you want to export animated WebP, install img2webp (from libwebp).")
+
+do_apng = False
+apngasm_path = shutil.which("apngasm")
+if img2webp_path:
+    do_apng = True
+    os.makedirs("export/apng", exist_ok=True)
+else:
+    print("If you want to export animated WebP, install apngasm.")
 
 meta = Meta()
 
@@ -55,6 +65,11 @@ for addr, comp in meta.comps.items():
             command = ["img2webp"]
             command.extend(pngs)
             command.extend(["-o", "export/webp/%06X.webp" % addr])
+            subprocess.run(command)
+
+        if do_apng:
+            command = ["apngasm", "export/apng/%06X.png" % addr]
+            command.extend(pngs)
             subprocess.run(command)
 
         images = []
