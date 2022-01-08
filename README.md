@@ -33,3 +33,17 @@ python -m blastimation.commands.list_sequence 0x21BF48 0x2237E8
 ```bash
 python -m unittest
 ```
+
+## Screenshots
+
+### List view
+![List view](screenshots/list_view.png "List view")
+
+### Icon view
+![Icon view](screenshots/icon_view.png "Icon view")
+
+### macOS
+![macOS](screenshots/macos.png "macOS")
+
+### Windows
+![Windows](screenshots/windows.png "Windows")
