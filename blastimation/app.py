@@ -43,7 +43,6 @@ class App(QWidget):
 
         self.single_model = self.make_single_model()
         self.composite_model = self.make_composite_model()
-        self.animation_model = self.make_composite_model()
 
         self.list_toggle_button_states = [
             (self.style().standardIcon(QStyle.SP_FileDialogListView), "Grid view"),
@@ -53,18 +52,21 @@ class App(QWidget):
         # Global widgets
         self.image_label = QLabel()
         self.lut_combo_box = QComboBox()
-        self.single_view = QTreeView()
-        self.single_view.sortByColumn(0, Qt.AscendingOrder)
         self.lut_auto_button = QPushButton("Guess LUT", self)
 
-        self.single_icon_view = QListView()
+        self.single_view = QTreeView()
+        self.single_view.sortByColumn(0, Qt.AscendingOrder)
         self.single_proxy_model = QSortFilterProxyModel()
+        self.single_icon_view = QListView()
         self.single_stack_widget = QStackedWidget()
+
         self.composite_view = QTreeView()
         self.composite_view.sortByColumn(0, Qt.AscendingOrder)
         self.composite_proxy_model = QSortFilterProxyModel()
-        self.list_toggle_button = QToolButton()
+        self.composite_icon_view = QListView()
+        self.composite_stack_widget = QStackedWidget()
 
+        self.list_toggle_button = QToolButton()
         self.init_widgets()
 
     def animate(self):
@@ -213,14 +215,23 @@ class App(QWidget):
         self.composite_view.selectionModel().currentChanged.connect(self.on_composite_select)
         self.composite_view.setSortingEnabled(True)
 
+        self.composite_icon_view.setViewMode(QListView.IconMode)
+        self.composite_icon_view.setMovement(QListView.Static)
+        self.composite_icon_view.setIconSize(QSize(128, 128))
+        self.composite_icon_view.setModel(self.composite_proxy_model)
+        self.composite_icon_view.selectionModel().currentChanged.connect(self.on_composite_select)
+
         tab_widget = QTabWidget()
         tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.single_stack_widget.addWidget(self.single_view)
         self.single_stack_widget.addWidget(self.single_icon_view)
 
+        self.composite_stack_widget.addWidget(self.composite_view)
+        self.composite_stack_widget.addWidget(self.composite_icon_view)
+
         tab_widget.addTab(self.single_stack_widget, "Single")
-        tab_widget.addTab(self.composite_view, "Comp")
+        tab_widget.addTab(self.composite_stack_widget, "Comp")
 
         self.lut_auto_button.clicked.connect(self.on_auto_lut)
         self.lut_auto_button.hide()
@@ -241,6 +252,7 @@ class App(QWidget):
             # Grid is active, make list
             new_index = 0
         self.single_stack_widget.setCurrentIndex(new_index)
+        self.composite_stack_widget.setCurrentIndex(new_index)
         self.list_toggle_button.setIcon(self.list_toggle_button_states[new_index][0])
         self.list_toggle_button.setToolTip(self.list_toggle_button_states[new_index][1])
 
@@ -292,7 +304,10 @@ class App(QWidget):
         self.animation_frame = 0
 
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
-        address = int(self.composite_proxy_model.data(addr_i), 16)
+        addr_str = self.composite_proxy_model.data(addr_i)
+        if not addr_str:
+            return
+        address = int(addr_str, 16)
 
         self.set_comp(self.meta.comps[address])
 
