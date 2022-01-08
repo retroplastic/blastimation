@@ -35,7 +35,7 @@ class App(QWidget):
         self.meta = None
 
         self.image = None
-        self.animation = None
+        self.comp = None
         self.animation_timer: QTimer = QTimer()
         self.animation_timer.setInterval(100)
         self.animation_timer.timeout.connect(self.animate)
@@ -67,18 +67,18 @@ class App(QWidget):
         self.init_widgets()
 
     def animate(self):
-        match self.animation.type:
+        match self.comp.type:
             case CompType.Animation:
-                frame_addr = self.animation.addresses[self.animation_frame]
+                frame_addr = self.comp.addresses[self.animation_frame]
                 self.image = rom.images[frame_addr]
                 self.image.decode()
             case CompType.AnimationComp:
-                self.image = self.animation.comps[self.animation_frame].get_image()
+                self.image = self.comp.comps[self.animation_frame].get_image()
 
         self.update_image_label()
 
         self.animation_frame += 1
-        if self.animation_frame >= self.animation.frames():
+        if self.animation_frame >= self.comp.frames():
             self.animation_frame = 0
 
     @staticmethod
@@ -235,7 +235,7 @@ class App(QWidget):
         self.list_toggle_button.setToolTip(self.list_toggle_button_states[new_index][1])
 
     def on_single_select(self, model_index):
-        self.animation = None
+        self.comp = None
         self.animation_timer.stop()
 
         addr_i = self.single_proxy_model.index(model_index.row(), 0)
@@ -262,39 +262,36 @@ class App(QWidget):
                 self.lut_auto_button.hide()
 
     def on_composite_select(self, model_index):
-        self.animation = None
         self.animation_timer.stop()
 
         addr_i = self.composite_proxy_model.index(model_index.row(), 0)
         address = int(self.composite_proxy_model.data(addr_i), 16)
 
-        c = self.meta.comps[address]
+        self.comp = self.meta.comps[address]
 
-        match c.type:
+        match self.comp.type:
             case CompType.Animation:
-                self.animation = c
-                self.image = rom.images[c.start()]
+                self.image = rom.images[self.comp.start()]
                 self.image.decode()
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
             case CompType.AnimationComp:
-                self.animation = c
-                self.image = c.comps[0].get_image()
+                self.image = self.comp.comps[0].get_image()
                 self.update_image_label()
                 self.animation_frame = 0
                 self.animation_timer.start()
             case _:
-                self.image = c.get_image()
+                self.image = self.comp.get_image()
                 self.update_image_label()
 
-        match c.blast():
+        match self.comp.blast():
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(c.blast())
+                lut_size = blast_get_lut_size(self.comp.blast())
                 self.lut_combo_box.setModel(self.lut_models[lut_size])
                 self.lut_combo_box.show()
                 self.lut_auto_button.show()
-                lut_index = list(luts[lut_size].keys()).index(self.image.lut)
+                lut_index = list(luts[lut_size].keys()).index(self.comp.lut())
                 self.lut_combo_box.setCurrentIndex(lut_index)
             case _:
                 self.lut_combo_box.hide()
