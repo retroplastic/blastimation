@@ -38,6 +38,10 @@ class AnimationComp:
     def lut(self):
         return self.comps[0].lut()
 
+    def set_lut(self, lut: int):
+        for c in self.comps:
+            c.set_lut(lut)
+
     def model_data(self):
         return [
             "0x%06X" % self.start(),

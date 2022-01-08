@@ -3,7 +3,7 @@ from enum import Enum
 from PySide6.QtCore import QPoint
 from PySide6.QtGui import QImage, QColor, QPainter, QPixmap
 
-from blastimation.blast import blast_get_format_id
+from blastimation.blast import blast_get_format_id, Blast
 from blastimation.image import BlastImage
 from blastimation.rom import rom
 
@@ -80,6 +80,15 @@ class Composite:
 
     def lut(self):
         return rom.images[self.start()].lut
+
+    def set_lut(self, lut: int):
+        assert lut != 0
+        assert self.blast() in [Blast.BLAST4_IA16, Blast.BLAST5_RGBA32]
+        if lut == self.lut():
+            return
+        for a in self.addresses:
+            rom.images[a].lut = lut
+            rom.images[a].decode(force=True)
 
     def get_image(self) -> BlastImage:
         assert self.type in [CompType.TopBottom, CompType.RightLeft, CompType.Quad]

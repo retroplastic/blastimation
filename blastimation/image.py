@@ -37,8 +37,8 @@ class BlastImage:
             self.decoded_size
         ]
 
-    def decode(self):
-        if self.pixmap:
+    def decode(self, force=False):
+        if self.pixmap and not force:
             return
 
         assert self.encoded

@@ -213,7 +213,6 @@ class App(QWidget):
 
         self.lut_auto_button.clicked.connect(self.on_auto_lut)
         self.lut_auto_button.hide()
-        self.lut_combo_box.currentIndexChanged.connect(self.on_lut_select)
         self.lut_combo_box.hide()
 
         menu_buttons.addWidget(blast_filter_box)
@@ -249,61 +248,77 @@ class App(QWidget):
 
         self.update_image_label()
 
+        # Update LUT combo box
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
                 lut_size = blast_get_lut_size(self.image.blast)
                 self.lut_combo_box.setModel(self.lut_models[lut_size])
-                self.lut_combo_box.show()
-                self.lut_auto_button.show()
                 lut_index = list(luts[lut_size].keys()).index(self.image.lut)
                 self.lut_combo_box.setCurrentIndex(lut_index)
+                try:
+                    self.lut_combo_box.currentIndexChanged.disconnect()
+                except RuntimeError:
+                    pass
+                self.lut_combo_box.currentIndexChanged.connect(self.on_lut_select)
+                self.lut_combo_box.show()
+                self.lut_auto_button.show()
             case _:
                 self.lut_combo_box.hide()
                 self.lut_auto_button.hide()
 
-    def on_composite_select(self, model_index):
-        self.animation_timer.stop()
-
-        addr_i = self.composite_proxy_model.index(model_index.row(), 0)
-        address = int(self.composite_proxy_model.data(addr_i), 16)
-
-        self.comp = self.meta.comps[address]
+    def set_comp(self, c):
+        self.comp = c
 
         match self.comp.type:
-            case CompType.Animation:
-                self.image = rom.images[self.comp.start()]
-                self.image.decode()
-                self.update_image_label()
-                self.animation_frame = 0
-                self.animation_timer.start()
-            case CompType.AnimationComp:
-                self.image = self.comp.comps[0].get_image()
-                self.update_image_label()
-                self.animation_frame = 0
+            case (CompType.Animation | CompType.AnimationComp):
                 self.animation_timer.start()
             case _:
                 self.image = self.comp.get_image()
                 self.update_image_label()
 
+    def on_composite_select(self, model_index):
+        self.animation_timer.stop()
+        self.animation_frame = 0
+
+        addr_i = self.composite_proxy_model.index(model_index.row(), 0)
+        address = int(self.composite_proxy_model.data(addr_i), 16)
+
+        self.set_comp(self.meta.comps[address])
+
+        # Update LUT combo box
         match self.comp.blast():
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                comp_lut = self.comp.lut()
                 lut_size = blast_get_lut_size(self.comp.blast())
                 self.lut_combo_box.setModel(self.lut_models[lut_size])
+                lut_index = list(luts[lut_size].keys()).index(comp_lut)
+                self.lut_combo_box.setCurrentIndex(lut_index)
+                try:
+                    self.lut_combo_box.currentIndexChanged.disconnect()
+                except RuntimeError:
+                    pass
+                self.lut_combo_box.currentIndexChanged.connect(self.on_lut_select)
                 self.lut_combo_box.show()
                 self.lut_auto_button.show()
-                lut_index = list(luts[lut_size].keys()).index(self.comp.lut())
-                self.lut_combo_box.setCurrentIndex(lut_index)
             case _:
                 self.lut_combo_box.hide()
                 self.lut_auto_button.hide()
 
     def on_lut_select(self, index):
-        match self.image.blast:
-            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
-                lut_size = blast_get_lut_size(self.image.blast)
-                self.image.lut = int(self.lut_models[lut_size].item(index).text(), 16)
-                self.image.decode()
-                self.update_image_label()
+        if self.comp:
+            match self.comp.blast():
+                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                    lut_size = blast_get_lut_size(self.comp.blast())
+                    new_lut = int(self.lut_models[lut_size].item(index).text(), 16)
+                    self.comp.set_lut(new_lut)
+                    self.set_comp(self.comp)
+        else:
+            match self.image.blast:
+                case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                    lut_size = blast_get_lut_size(self.image.blast)
+                    self.image.lut = int(self.lut_models[lut_size].item(index).text(), 16)
+                    self.image.decode()
+                    self.update_image_label()
 
     def on_blast_filter_changed(self, index):
         blast_type = self.blast_filter_types[index]
