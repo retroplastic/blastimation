@@ -35,6 +35,9 @@ class AnimationComp:
     def frames(self):
         return len(self.comps)
 
+    def lut(self):
+        return self.comps[0].lut()
+
     def model_data(self):
         return [
             "0x%06X" % self.start(),

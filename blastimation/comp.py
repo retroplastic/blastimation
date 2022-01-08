@@ -78,6 +78,9 @@ class Composite:
             self.frames()
         ]
 
+    def lut(self):
+        return rom.images[self.start()].lut
+
     def get_image(self) -> BlastImage:
         assert self.type in [CompType.TopBottom, CompType.RightLeft, CompType.Quad]
 

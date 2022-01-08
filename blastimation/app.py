@@ -288,6 +288,18 @@ class App(QWidget):
                 self.image = c.get_image()
                 self.update_image_label()
 
+        match c.blast():
+            case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
+                lut_size = blast_get_lut_size(c.blast())
+                self.lut_combo_box.setModel(self.lut_models[lut_size])
+                self.lut_combo_box.show()
+                self.lut_auto_button.show()
+                lut_index = list(luts[lut_size].keys()).index(self.image.lut)
+                self.lut_combo_box.setCurrentIndex(lut_index)
+            case _:
+                self.lut_combo_box.hide()
+                self.lut_auto_button.hide()
+
     def on_lut_select(self, index):
         match self.image.blast:
             case (Blast.BLAST4_IA16 | Blast.BLAST5_RGBA32):
