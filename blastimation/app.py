@@ -61,6 +61,7 @@ class App(QWidget):
         self.single_proxy_model = QSortFilterProxyModel()
         self.single_stack_widget = QStackedWidget()
         self.composite_view = QTreeView()
+        self.composite_view.sortByColumn(0, Qt.AscendingOrder)
         self.composite_proxy_model = QSortFilterProxyModel()
         self.list_toggle_button = QToolButton()
 
